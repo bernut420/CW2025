@@ -4,6 +4,7 @@
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.Group?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Text?>
 <?import java.net.URL?>
 
@@ -18,11 +19,19 @@
         <Label fx:id="linesLabel" text="Lines: 0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;"/>
     </HBox>
 
+    <!-- Game Border -->
+    <Rectangle fx:id="gameBorder"
+               layoutX="39" layoutY="49"
+               width="210" height="490"
+               fill="transparent"
+               stroke="#666666"
+               strokeWidth="3"/>
+
     <!-- Game Area -->
     <GridPane fx:id="gamePanel" hgap="1" vgap="1" layoutX="40" layoutY="50"/>
 
-    <!-- Brick Panel (for current falling brick) -->
-    <GridPane fx:id="brickPanel" vgap="1" hgap="1"/>
+    <!-- Brick panel positioning -->
+    <GridPane fx:id="brickPanel" hgap="1" vgap="1" layoutX="40" layoutY="50"/>
 
     <!-- Notifications and Game Over -->
     <Group fx:id="groupNotification" layoutX="14" layoutY="203">
