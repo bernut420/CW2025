@@ -7,9 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
 public class Main extends Application {
 
     @Override
@@ -31,13 +28,6 @@ public class Main extends Application {
         primaryStage.show();
         new GameController(c);
     }
-
-    public static void main(String[] args) {
-        launch(args);
-    }
-}
-
-
 
     public static void main(String[] args) {
         launch(args);

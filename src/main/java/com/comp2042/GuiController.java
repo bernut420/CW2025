@@ -119,6 +119,10 @@ public class GuiController implements Initializable {
                         moveDown(new MoveEvent(EventType.DOWN, EventSource.USER));
                         keyEvent.consume();
                     }
+                    if (keyEvent.getCode() == KeyCode.SPACE) {
+                        hardDrop();
+                        keyEvent.consume();
+                    }
                 }
                 if (keyEvent.getCode() == KeyCode.N) {
                     newGame(null);
@@ -262,6 +266,32 @@ public class GuiController implements Initializable {
 
             }
             refreshBrick(downData.getViewData());
+        }
+        gamePanel.requestFocus();
+    }
+
+    private void hardDrop() {
+        if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
+            // Keep moving the brick down until it can't move anymore
+            boolean canMove = true;
+            int dropDistance = 0;
+
+            while (canMove) {
+                DownData downData = eventListener.onDownEvent(new MoveEvent(EventType.DOWN, EventSource.USER));
+                canMove = (downData.getClearRow() == null); // If clearRow is null, brick is still moving
+                if (canMove) {
+                    refreshBrick(downData.getViewData());
+                    dropDistance++;
+                }
+            }
+
+            // Add score bonus based on drop distance
+            if (dropDistance > 0) {
+
+                int bonusPoints = dropDistance * 2;
+
+                System.out.println("Hard drop: " + dropDistance + " rows, bonus: " + bonusPoints);
+            }
         }
         gamePanel.requestFocus();
     }

@@ -22,7 +22,7 @@
     <!-- Game Border -->
     <Rectangle fx:id="gameBorder"
                layoutX="39" layoutY="49"
-               width="210" height="490"
+               width="210" height="485"
                fill="transparent"
                stroke="#666666"
                strokeWidth="3"/>

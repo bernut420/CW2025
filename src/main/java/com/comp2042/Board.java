@@ -23,4 +23,5 @@ public interface Board {
     Score getScore();
 
     void newGame();
+
 }
