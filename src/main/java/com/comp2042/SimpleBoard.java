@@ -10,6 +10,7 @@ public class SimpleBoard implements Board {
 
     private final int width;
     private final int height;
+    private static final int HIDDEN_ROWS = 2;
     private final BrickGenerator brickGenerator;
     private final BrickRotator brickRotator;
     private int[][] currentGameMatrix;
@@ -85,7 +86,8 @@ public class SimpleBoard implements Board {
     public boolean createNewBrick() {
         Brick currentBrick = brickGenerator.getBrick();
         brickRotator.setBrick(currentBrick);
-        currentOffset = new Point(4, 10);
+        // Spawn bricks just above the visible playfield so players can stack up to 20 blocks high
+        currentOffset = new Point(4, HIDDEN_ROWS);
         return MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
     }
 

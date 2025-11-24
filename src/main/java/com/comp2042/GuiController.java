@@ -33,6 +33,8 @@ import java.util.ResourceBundle;
 public class GuiController implements Initializable {
 
     private static final int BRICK_SIZE = 20;
+    private static final int HIDDEN_ROWS = 2;
+    private static final int NEXT_PREVIEW_SIZE = 4;
 
     @FXML
     private GridPane gamePanel;
@@ -42,6 +44,9 @@ public class GuiController implements Initializable {
 
     @FXML
     private GridPane brickPanel;
+
+    @FXML
+    private GridPane nextBlockPanel;
 
     @FXML
     private GameOverPanel gameOverPanel;
@@ -69,6 +74,7 @@ public class GuiController implements Initializable {
     private InputEventListener eventListener;
 
     private Rectangle[][] rectangles;
+    private Rectangle[][] nextBrickPreview;
 
     private Timeline timeLine;
 
@@ -181,6 +187,7 @@ public class GuiController implements Initializable {
                 brickPanel.add(rectangle, j, i);
             }
         }
+        initialiseNextBrickPanel(brick.getNextBrickData());
         updateBrickPosition(brick);
 
         timeLine = new Timeline(new KeyFrame(
@@ -236,6 +243,7 @@ public class GuiController implements Initializable {
                     setRectangleData(brick.getBrickData()[i][j], rectangles[i][j]);
                 }
             }
+            updateNextBrickPanel(brick.getNextBrickData());
         }
     }
 
@@ -251,6 +259,37 @@ public class GuiController implements Initializable {
         rectangle.setFill(getFillColor(color));
         rectangle.setArcHeight(9);
         rectangle.setArcWidth(9);
+    }
+
+    private void initialiseNextBrickPanel(int[][] nextBrickData) {
+        if (nextBlockPanel == null) {
+            return;
+        }
+        nextBlockPanel.getChildren().clear();
+        nextBrickPreview = new Rectangle[NEXT_PREVIEW_SIZE][NEXT_PREVIEW_SIZE];
+        for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
+            for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
+                Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                rectangle.setFill(Color.TRANSPARENT);
+                nextBrickPreview[row][col] = rectangle;
+                nextBlockPanel.add(rectangle, col, row);
+            }
+        }
+        updateNextBrickPanel(nextBrickData);
+    }
+
+    private void updateNextBrickPanel(int[][] nextBrickData) {
+        if (nextBrickPreview == null || nextBrickData == null) {
+            return;
+        }
+        for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
+            for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
+                int value = (row < nextBrickData.length && col < nextBrickData[row].length)
+                        ? nextBrickData[row][col]
+                        : 0;
+                setRectangleData(value, nextBrickPreview[row][col]);
+            }
+        }
     }
 
     private void moveDown(MoveEvent event) {
@@ -406,9 +445,13 @@ public class GuiController implements Initializable {
 
     private void updateBrickPosition(ViewData brick) {
         if (brickPanel != null) {
-            // Use relative positioning that will work with centered layout
-            double xPos = 40 + (brick.getxPosition() * BRICK_SIZE);
-            double yPos = 50 + ((brick.getyPosition() - 1) * BRICK_SIZE);
+            // Anchor to the background grid so active bricks never drift when they lock in place
+            double originX = gamePanel.getLayoutX();
+            double originY = gamePanel.getLayoutY();
+            double cellWidth = BRICK_SIZE + gamePanel.getHgap();
+            double cellHeight = BRICK_SIZE + gamePanel.getVgap();
+            double xPos = originX + (brick.getxPosition() * cellWidth);
+            double yPos = originY + ((brick.getyPosition() - HIDDEN_ROWS) * cellHeight);
 
             brickPanel.setLayoutX(xPos);
             brickPanel.setLayoutY(yPos);
