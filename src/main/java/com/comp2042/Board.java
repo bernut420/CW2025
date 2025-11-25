@@ -24,4 +24,6 @@ public interface Board {
 
     void newGame();
 
+    HoldResult holdCurrentBrick();
+
 }

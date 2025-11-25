@@ -32,7 +32,7 @@ import java.util.ResourceBundle;
 
 public class GuiController implements Initializable {
 
-    private static final int BRICK_SIZE = 20;
+    private static final int BRICK_SIZE = 25;
     private static final int HIDDEN_ROWS = 2;
     private static final int NEXT_PREVIEW_SIZE = 4;
 
@@ -47,6 +47,9 @@ public class GuiController implements Initializable {
 
     @FXML
     private GridPane nextBlockPanel;
+
+    @FXML
+    private GridPane holdBlockPanel;
 
     @FXML
     private GameOverPanel gameOverPanel;
@@ -75,6 +78,7 @@ public class GuiController implements Initializable {
 
     private Rectangle[][] rectangles;
     private Rectangle[][] nextBrickPreview;
+    private Rectangle[][] holdBrickPreview;
 
     private Timeline timeLine;
 
@@ -85,10 +89,12 @@ public class GuiController implements Initializable {
     private final IntegerProperty currentScore = new SimpleIntegerProperty(0);
     private final IntegerProperty currentLevel = new SimpleIntegerProperty(1);
     private final IntegerProperty linesCleared = new SimpleIntegerProperty(0);
+    private int boardColumns;
+    private int visibleRows;
 
     private double scaleFactor = 1.0;
-    private static final double BASE_GAME_WIDTH = 250; // 10 bricks * 25px + gaps
-    private static final double BASE_GAME_HEIGHT = 500; // 20 bricks * 25px + gaps
+    private static final double BASE_GAME_WIDTH = 262; // Game area width (border + grid)
+    private static final double BASE_GAME_HEIGHT = 606; // Game area height (border + grid)
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -127,6 +133,10 @@ public class GuiController implements Initializable {
                     }
                     if (keyEvent.getCode() == KeyCode.SPACE) {
                         hardDrop();
+                        keyEvent.consume();
+                    }
+                    if (keyEvent.getCode() == KeyCode.C || keyEvent.getCode() == KeyCode.SHIFT) {
+                        holdCurrentBrick();
                         keyEvent.consume();
                     }
                 }
@@ -168,6 +178,8 @@ public class GuiController implements Initializable {
     }
 
     public void initGameView(int[][] boardMatrix, ViewData brick) {
+        boardColumns = boardMatrix[0].length;
+        visibleRows = boardMatrix.length - HIDDEN_ROWS;
         displayMatrix = new Rectangle[boardMatrix.length][boardMatrix[0].length];
         for (int i = 2; i < boardMatrix.length; i++) {
             for (int j = 0; j < boardMatrix[i].length; j++) {
@@ -188,6 +200,8 @@ public class GuiController implements Initializable {
             }
         }
         initialiseNextBrickPanel(brick.getNextBrickData());
+        initialiseHoldBrickPanel(brick.getHoldBrickData());
+        updateGameBorderDimensions();
         updateBrickPosition(brick);
 
         timeLine = new Timeline(new KeyFrame(
@@ -244,6 +258,7 @@ public class GuiController implements Initializable {
                 }
             }
             updateNextBrickPanel(brick.getNextBrickData());
+            updateHoldBrickPanel(brick.getHoldBrickData());
         }
     }
 
@@ -292,6 +307,37 @@ public class GuiController implements Initializable {
         }
     }
 
+    private void initialiseHoldBrickPanel(int[][] holdBrickData) {
+        if (holdBlockPanel == null) {
+            return;
+        }
+        holdBlockPanel.getChildren().clear();
+        holdBrickPreview = new Rectangle[NEXT_PREVIEW_SIZE][NEXT_PREVIEW_SIZE];
+        for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
+            for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
+                Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                rectangle.setFill(Color.TRANSPARENT);
+                holdBrickPreview[row][col] = rectangle;
+                holdBlockPanel.add(rectangle, col, row);
+            }
+        }
+        updateHoldBrickPanel(holdBrickData);
+    }
+
+    private void updateHoldBrickPanel(int[][] holdBrickData) {
+        if (holdBrickPreview == null || holdBrickData == null) {
+            return;
+        }
+        for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
+            for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
+                int value = (row < holdBrickData.length && col < holdBrickData[row].length)
+                        ? holdBrickData[row][col]
+                        : 0;
+                setRectangleData(value, holdBrickPreview[row][col]);
+            }
+        }
+    }
+
     private void moveDown(MoveEvent event) {
         if (isPause.getValue() == Boolean.FALSE) {
             DownData downData = eventListener.onDownEvent(event);
@@ -335,12 +381,20 @@ public class GuiController implements Initializable {
         gamePanel.requestFocus();
     }
 
+    private void holdCurrentBrick() {
+        if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
+            ViewData data = eventListener.onHoldEvent(new MoveEvent(EventType.HOLD, EventSource.USER));
+            refreshBrick(data);
+        }
+        gamePanel.requestFocus();
+    }
+
     private void updateLevelAndLines(int linesRemoved) {
         if (linesRemoved > 0) {
             linesCleared.set(linesCleared.get() + linesRemoved);
 
-            // Update level: increase every 10 lines cleared
-            int newLevel = (linesCleared.get() / 10) + 1;
+            // Increase level every 15 lines cleared
+            int newLevel = (linesCleared.get() / 15) + 1;
             if (newLevel > currentLevel.get()) {
                 currentLevel.set(newLevel);
                 updateGameSpeed();
@@ -364,28 +418,54 @@ public class GuiController implements Initializable {
         }
     }
 
-    private void updateGameScale() {
+    public void updateGameScale() {
         if (gameContainer == null || scalingContainer == null) return;
 
+        // Use layout bounds to get actual dimensions, fallback to width/height
         double containerWidth = gameContainer.getWidth();
         double containerHeight = gameContainer.getHeight();
+        
 
+        if (containerWidth <= 0 || containerHeight <= 0) {
+            containerWidth = gameContainer.getLayoutBounds().getWidth();
+            containerHeight = gameContainer.getLayoutBounds().getHeight();
+        }
+        
         if (containerWidth <= 0 || containerHeight <= 0) return;
 
+        // Get the actual preferred size of the scaling container
+        double contentWidth = scalingContainer.getPrefWidth() > 0 ? scalingContainer.getPrefWidth() : BASE_GAME_WIDTH;
+        double contentHeight = scalingContainer.getPrefHeight() > 0 ? scalingContainer.getPrefHeight() : BASE_GAME_HEIGHT;
+
         // Calculate scale factors for width and height
-        double scaleX = containerWidth / BASE_GAME_WIDTH;
-        double scaleY = containerHeight / BASE_GAME_HEIGHT;
+        double scaleX = containerWidth / contentWidth;
+        double scaleY = containerHeight / contentHeight;
 
-        // Use the smaller scale to maintain aspect ratio and fit entirely in view
-        scaleFactor = Math.min(scaleX, scaleY);
+        scaleFactor = Math.min(scaleX, scaleY) * 0.85;
+        
+        // Cap maximum scale at 1.5x to make game bigger on large screens
+        if (scaleFactor > 1.0) {
+            scaleFactor = 1.0;
+        }
 
-        // Apply scaling
+        // Set transform origin to top-left corner (0, 0)
+        scalingContainer.setTranslateX(0);
+        scalingContainer.setTranslateY(0);
+        
+        // Apply scaling from top-left origin
         scalingContainer.setScaleX(scaleFactor);
         scalingContainer.setScaleY(scaleFactor);
 
-        // Center the scaled content
-        scalingContainer.setTranslateX((containerWidth - (BASE_GAME_WIDTH * scaleFactor)) / 2);
-        scalingContainer.setTranslateY((containerHeight - (BASE_GAME_HEIGHT * scaleFactor)) / 2);
+        // Calculate scaled dimensions
+        double scaledWidth = contentWidth * scaleFactor;
+        double scaledHeight = contentHeight * scaleFactor;
+        
+        // Center the scaled content by translating it
+        double offsetX = (containerWidth - scaledWidth) / 2;
+        double offsetY = (containerHeight - scaledHeight) / 2;
+        
+        scalingContainer.setTranslateX(offsetX);
+        scalingContainer.setTranslateY(offsetY);
     }
 
     private void centerGameInFullscreen() {
@@ -464,5 +544,21 @@ public class GuiController implements Initializable {
 
     public void setScaleFactor(double scaleFactor) {
         this.scaleFactor = scaleFactor;
+    }
+
+    private void updateGameBorderDimensions() {
+        if (gameBorder == null || gamePanel == null) {
+            return;
+        }
+        double gapX = gamePanel.getHgap();
+        double gapY = gamePanel.getVgap();
+        double gridWidth = (boardColumns * BRICK_SIZE) + (Math.max(0, boardColumns - 1) * gapX);
+        double gridHeight = (visibleRows * BRICK_SIZE) + (Math.max(0, visibleRows - 1) * gapY);
+        double padding = gameBorder.getStrokeWidth();
+
+        gameBorder.setWidth(gridWidth + padding);
+        gameBorder.setHeight(gridHeight + padding);
+        gameBorder.setLayoutX(gamePanel.getLayoutX() - padding / 2);
+        gameBorder.setLayoutY(gamePanel.getLayoutY() - padding / 2);
     }
 }

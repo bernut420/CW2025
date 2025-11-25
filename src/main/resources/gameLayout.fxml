@@ -1,4 +1,5 @@
 <?import com.comp2042.GameOverPanel?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ToggleButton?>
@@ -8,44 +9,54 @@
 <?import javafx.scene.text.Text?>
 <?import java.net.URL?>
 
-<Pane fx:controller="com.comp2042.GuiController"
-      xmlns:fx="http://javafx.com/fxml"
-      style="-fx-background-color: #2b2b2b;">
+<StackPane fx:id="gameContainer" fx:controller="com.comp2042.GuiController"
+           xmlns:fx="http://javafx.com/fxml"
+           style="-fx-background-color: #2b2b2b;">
+    <Pane fx:id="scalingContainer" prefWidth="262" prefHeight="606">
 
-    <!-- Scoreboard & Next Block -->
-    <HBox spacing="20" style="-fx-padding: 10;" layoutX="10" layoutY="10">
-        <Label fx:id="scoreLabel" text="Score: 0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-        <Label fx:id="levelLabel" text="Level: 1" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-        <Label fx:id="linesLabel" text="Lines: 0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-        <Region prefWidth="40"/>
+        <!-- Game Border -->
+        <Rectangle fx:id="gameBorder"
+                   layoutX="38" layoutY="70"
+                   width="212" height="500"
+                   fill="transparent"
+                   stroke="#666666"
+                   strokeWidth="3"/>
+
+        <!-- Game Area -->
+        <GridPane fx:id="gamePanel" hgap="1" vgap="1" layoutX="40" layoutY="69"/>
+
+        <!-- Brick panel positioning -->
+        <GridPane fx:id="brickPanel" hgap="1" vgap="1" layoutX="40" layoutY="69"/>
+
+        <!-- Notifications and Game Over -->
+        <Group fx:id="groupNotification" layoutX="14" layoutY="222">
+            <VBox alignment="CENTER">
+                <GameOverPanel fx:id="gameOverPanel"/>
+            </VBox>
+        </Group>
+    </Pane>
+
+    <!-- HUD (Hold / Score / Next) -->
+    <HBox spacing="25" StackPane.alignment="TOP_LEFT">
+        <StackPane.margin>
+            <Insets top="15" left="15"/>
+        </StackPane.margin>
         <VBox spacing="5" alignment="CENTER_LEFT">
-            <Label text="Next" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Label text="Hold" style="-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <GridPane fx:id="holdBlockPanel" hgap="1" vgap="1"/>
+        </VBox>
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label fx:id="scoreLabel" text="Score: 0" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label fx:id="levelLabel" text="Level: 1" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label fx:id="linesLabel" text="Lines: 0" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+        </VBox>
+        <VBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="Next" style="-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;"/>
             <GridPane fx:id="nextBlockPanel" hgap="1" vgap="1"/>
         </VBox>
     </HBox>
 
-    <!-- Game Border -->
-    <Rectangle fx:id="gameBorder"
-               layoutX="38" layoutY="70"
-               width="210" height="485"
-               fill="transparent"
-               stroke="#666666"
-               strokeWidth="3"/>
-
-    <!-- Game Area -->
-    <GridPane fx:id="gamePanel" hgap="1" vgap="1" layoutX="40" layoutY="69"/>
-
-    <!-- Brick panel positioning -->
-    <GridPane fx:id="brickPanel" hgap="1" vgap="1" layoutX="40" layoutY="69"/>
-
-    <!-- Notifications and Game Over -->
-    <Group fx:id="groupNotification" layoutX="14" layoutY="222">
-        <VBox alignment="CENTER">
-            <GameOverPanel fx:id="gameOverPanel"/>
-        </VBox>
-    </Group>
-
     <stylesheets>
         <URL value="@window_style.css"/>
     </stylesheets>
-</Pane>
+</StackPane>

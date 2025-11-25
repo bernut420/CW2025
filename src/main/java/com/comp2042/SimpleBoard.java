@@ -16,6 +16,8 @@ public class SimpleBoard implements Board {
     private int[][] currentGameMatrix;
     private Point currentOffset;
     private final Score score;
+    private Brick holdBrick;
+    private boolean holdUsedThisTurn;
 
     public SimpleBoard(int width, int height) {
         this.width = width;
@@ -24,6 +26,8 @@ public class SimpleBoard implements Board {
         brickGenerator = new RandomBrickGenerator();
         brickRotator = new BrickRotator();
         score = new Score();
+        holdBrick = null;
+        holdUsedThisTurn = false;
     }
 
     @Override
@@ -88,6 +92,7 @@ public class SimpleBoard implements Board {
         brickRotator.setBrick(currentBrick);
         // Spawn bricks just above the visible playfield so players can stack up to 20 blocks high
         currentOffset = new Point(4, HIDDEN_ROWS);
+        holdUsedThisTurn = false;
         return MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
     }
 
@@ -98,7 +103,7 @@ public class SimpleBoard implements Board {
 
     @Override
     public ViewData getViewData() {
-        return new ViewData(brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY(), brickGenerator.getNextBrick().getShapeMatrix().get(0));
+        return new ViewData(brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY(), brickGenerator.getNextBrick().getShapeMatrix().get(0), getHoldPreviewData());
     }
 
     @Override
@@ -125,5 +130,46 @@ public class SimpleBoard implements Board {
         currentGameMatrix = new int[width][height];
         score.reset();
         createNewBrick();
+        holdBrick = null;
+        holdUsedThisTurn = false;
+    }
+
+    @Override
+    public HoldResult holdCurrentBrick() {
+        if (holdUsedThisTurn) {
+            return HoldResult.failure();
+        }
+
+        Brick current = brickRotator.getBrick();
+        if (current == null) {
+            return HoldResult.failure();
+        }
+
+        if (holdBrick == null) {
+            holdBrick = current;
+            boolean gameOver = createNewBrick();
+            holdUsedThisTurn = true;
+            return HoldResult.success(gameOver);
+        } else {
+            Brick swap = holdBrick;
+            holdBrick = current;
+            brickRotator.setBrick(swap);
+            currentOffset = new Point(4, HIDDEN_ROWS);
+            boolean conflict = MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
+            if (conflict) {
+                holdBrick = swap;
+                brickRotator.setBrick(current);
+                return HoldResult.failure();
+            }
+            holdUsedThisTurn = true;
+            return HoldResult.success(false);
+        }
+    }
+
+    private int[][] getHoldPreviewData() {
+        if (holdBrick == null) {
+            return new int[4][4];
+        }
+        return holdBrick.getShapeMatrix().get(0);
     }
 }

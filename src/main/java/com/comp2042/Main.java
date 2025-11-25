@@ -1,6 +1,7 @@
 package com.comp2042;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -25,7 +26,34 @@ public class Main extends Application {
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.valueOf("ESC"));
 
         primaryStage.setScene(scene);
+        primaryStage.setFullScreen(true);
         primaryStage.show();
+        
+        // Center the game after the window is shown and fullscreen is activated
+        // Use multiple delayed calls to ensure dimensions are available
+        Platform.runLater(() -> {
+            Platform.runLater(() -> {
+                if (primaryStage.isFullScreen()) {
+                    c.updateGameScale();
+                }
+            });
+        });
+        
+        // Listen for fullscreen changes to re-center
+        primaryStage.fullScreenProperty().addListener((obs, wasFullscreen, isNowFullscreen) -> {
+            Platform.runLater(() -> {
+                Platform.runLater(() -> c.updateGameScale());
+            });
+        });
+        
+        // Also listen for scene size changes
+        scene.widthProperty().addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> c.updateGameScale());
+        });
+        scene.heightProperty().addListener((obs, oldVal, newVal) -> {
+            Platform.runLater(() -> c.updateGameScale());
+        });
+        
         new GameController(c);
     }
 
