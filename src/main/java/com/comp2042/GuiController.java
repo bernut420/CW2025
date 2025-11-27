@@ -14,9 +14,11 @@ import javafx.scene.Group;
 import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -46,6 +48,9 @@ public class GuiController implements Initializable {
     private GridPane brickPanel;
 
     @FXML
+    private GridPane ghostPanel;
+
+    @FXML
     private GridPane nextBlockPanel;
 
     @FXML
@@ -72,11 +77,21 @@ public class GuiController implements Initializable {
     @FXML
     private Rectangle gameBorder;
 
+    @FXML
+    private VBox startScreen;
+
+    @FXML
+    private Button playButton;
+
+    @FXML
+    private Button exitButton;
+
     private Rectangle[][] displayMatrix;
 
     private InputEventListener eventListener;
 
     private Rectangle[][] rectangles;
+    private Rectangle[][] ghostRectangles;
     private Rectangle[][] nextBrickPreview;
     private Rectangle[][] holdBrickPreview;
 
@@ -93,8 +108,8 @@ public class GuiController implements Initializable {
     private int visibleRows;
 
     private double scaleFactor = 1.0;
-    private static final double BASE_GAME_WIDTH = 262; // Game area width (border + grid)
-    private static final double BASE_GAME_HEIGHT = 606; // Game area height (border + grid)
+    private static final double BASE_GAME_WIDTH = 480; // Total width including right-side HUD
+    private static final double BASE_GAME_HEIGHT = 640; // Total height
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -103,6 +118,14 @@ public class GuiController implements Initializable {
         gamePanel.requestFocus();
 
         initializeScoreDisplay();
+        
+        // Hide game initially, show start screen
+        if (scalingContainer != null) {
+            scalingContainer.setVisible(false);
+        }
+        if (startScreen != null) {
+            startScreen.setVisible(true);
+        }
 
         // Add resize listener for responsive scaling
         if (gameContainer != null) {
@@ -199,10 +222,29 @@ public class GuiController implements Initializable {
                 brickPanel.add(rectangle, j, i);
             }
         }
+        
+        // Initialize ghost panel
+        if (ghostPanel != null) {
+            ghostPanel.getChildren().clear();
+            ghostRectangles = new Rectangle[brick.getBrickData().length][brick.getBrickData()[0].length];
+            for (int i = 0; i < brick.getBrickData().length; i++) {
+                for (int j = 0; j < brick.getBrickData()[i].length; j++) {
+                    Rectangle rectangle = new Rectangle(BRICK_SIZE, BRICK_SIZE);
+                    rectangle.setFill(getFillColor(brick.getBrickData()[i][j]));
+                    rectangle.setOpacity(0.3); // Make ghost semi-transparent
+                    rectangle.setArcHeight(9);
+                    rectangle.setArcWidth(9);
+                    ghostRectangles[i][j] = rectangle;
+                    ghostPanel.add(rectangle, j, i);
+                }
+            }
+        }
+        
         initialiseNextBrickPanel(brick.getNextBrickData());
         initialiseHoldBrickPanel(brick.getHoldBrickData());
         updateGameBorderDimensions();
         updateBrickPosition(brick);
+        updateGhostPosition(brick);
 
         timeLine = new Timeline(new KeyFrame(
                 Duration.millis(400),
@@ -252,6 +294,7 @@ public class GuiController implements Initializable {
     private void refreshBrick(ViewData brick) {
         if (isPause.getValue() == Boolean.FALSE) {
             updateBrickPosition(brick);
+            updateGhostPosition(brick);
             for (int i = 0; i < brick.getBrickData().length; i++) {
                 for (int j = 0; j < brick.getBrickData()[i].length; j++) {
                     setRectangleData(brick.getBrickData()[i][j], rectangles[i][j]);
@@ -538,12 +581,63 @@ public class GuiController implements Initializable {
         }
     }
 
+    private void updateGhostPosition(ViewData brick) {
+        if (ghostPanel != null && ghostRectangles != null) {
+            // Position ghost at the landing location
+            double originX = gamePanel.getLayoutX();
+            double originY = gamePanel.getLayoutY();
+            double cellWidth = BRICK_SIZE + gamePanel.getHgap();
+            double cellHeight = BRICK_SIZE + gamePanel.getVgap();
+            double xPos = originX + (brick.getGhostXPosition() * cellWidth);
+            double yPos = originY + ((brick.getGhostYPosition() - HIDDEN_ROWS) * cellHeight);
+
+            ghostPanel.setLayoutX(xPos);
+            ghostPanel.setLayoutY(yPos);
+            
+            // Update ghost block colors to match current brick
+            int[][] brickData = brick.getBrickData();
+            for (int i = 0; i < brickData.length && i < ghostRectangles.length; i++) {
+                for (int j = 0; j < brickData[i].length && j < ghostRectangles[i].length; j++) {
+                    if (ghostRectangles[i][j] != null) {
+                        if (brickData[i][j] != 0) {
+                            ghostRectangles[i][j].setFill(getFillColor(brickData[i][j]));
+                            ghostRectangles[i][j].setOpacity(0.3); // Keep semi-transparent
+                            ghostRectangles[i][j].setVisible(true);
+                        } else {
+                            ghostRectangles[i][j].setVisible(false);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public double getScaleFactor() {
         return scaleFactor;
     }
 
     public void setScaleFactor(double scaleFactor) {
         this.scaleFactor = scaleFactor;
+    }
+
+    @FXML
+    private void startGame(ActionEvent event) {
+        if (startScreen != null) {
+            startScreen.setVisible(false);
+        }
+        if (scalingContainer != null) {
+            scalingContainer.setVisible(true);
+        }
+        if (eventListener == null) {
+            // Initialize game if not already initialized
+            new GameController(this);
+        }
+        gamePanel.requestFocus();
+    }
+
+    @FXML
+    private void exitGame(ActionEvent event) {
+        Platform.exit();
     }
 
     private void updateGameBorderDimensions() {

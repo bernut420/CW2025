@@ -54,7 +54,7 @@ public class Main extends Application {
             Platform.runLater(() -> c.updateGameScale());
         });
         
-        new GameController(c);
+        // GameController will be initialized when user clicks "Play" button
     }
 
     public static void main(String[] args) {
