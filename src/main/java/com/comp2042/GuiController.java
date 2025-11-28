@@ -11,10 +11,12 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.control.Button;
+import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -78,6 +80,15 @@ public class GuiController implements Initializable {
     private Rectangle gameBorder;
 
     @FXML
+    private Rectangle gameBorderOuter;
+
+    @FXML
+    private Rectangle hudBorder;
+
+    @FXML
+    private Rectangle hudBorderOuter;
+
+    @FXML
     private VBox startScreen;
 
     @FXML
@@ -85,6 +96,12 @@ public class GuiController implements Initializable {
 
     @FXML
     private Button exitButton;
+
+    @FXML
+    private Button pauseButton;
+
+    @FXML
+    private Button restartButton;
 
     private Rectangle[][] displayMatrix;
 
@@ -118,6 +135,7 @@ public class GuiController implements Initializable {
         gamePanel.requestFocus();
 
         initializeScoreDisplay();
+        initializeBorders();
         
         // Hide game initially, show start screen
         if (scalingContainer != null) {
@@ -196,7 +214,36 @@ public class GuiController implements Initializable {
             levelLabel.textProperty().bind(currentLevel.asString("Level: %d"));
         }
         if (linesLabel != null) {
-            linesLabel.textProperty().bind(linesCleared.asString("Lines: %d"));
+            // Use a change listener to ensure the label updates
+            linesCleared.addListener((obs, oldVal, newVal) -> {
+                if (linesLabel != null) {
+                    linesLabel.setText("Lines: " + newVal.intValue());
+                }
+            });
+            // Set initial value
+            linesLabel.setText("Lines: " + linesCleared.get());
+        }
+    }
+
+    private void initializeBorders() {
+        // Add drop shadow effects to game border
+        if (gameBorder != null) {
+            DropShadow gameShadow = new DropShadow();
+            gameShadow.setColor(Color.rgb(74, 144, 226, 0.5));
+            gameShadow.setRadius(8);
+            gameShadow.setOffsetX(0);
+            gameShadow.setOffsetY(0);
+            gameBorder.setEffect(gameShadow);
+        }
+        
+        // Add drop shadow effects to HUD border
+        if (hudBorder != null) {
+            DropShadow hudShadow = new DropShadow();
+            hudShadow.setColor(Color.rgb(139, 127, 168, 0.4));
+            hudShadow.setRadius(6);
+            hudShadow.setOffsetX(0);
+            hudShadow.setOffsetY(0);
+            hudBorder.setEffect(hudShadow);
         }
     }
 
@@ -245,6 +292,10 @@ public class GuiController implements Initializable {
         updateGameBorderDimensions();
         updateBrickPosition(brick);
         updateGhostPosition(brick);
+
+        // Initialize level and lines cleared
+        currentLevel.set(1);
+        linesCleared.set(0);
 
         timeLine = new Timeline(new KeyFrame(
                 Duration.millis(400),
@@ -324,6 +375,7 @@ public class GuiController implements Initializable {
             return;
         }
         nextBlockPanel.getChildren().clear();
+        nextBlockPanel.setAlignment(javafx.geometry.Pos.CENTER);
         nextBrickPreview = new Rectangle[NEXT_PREVIEW_SIZE][NEXT_PREVIEW_SIZE];
         for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
             for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
@@ -355,6 +407,7 @@ public class GuiController implements Initializable {
             return;
         }
         holdBlockPanel.getChildren().clear();
+        holdBlockPanel.setAlignment(javafx.geometry.Pos.CENTER);
         holdBrickPreview = new Rectangle[NEXT_PREVIEW_SIZE][NEXT_PREVIEW_SIZE];
         for (int row = 0; row < NEXT_PREVIEW_SIZE; row++) {
             for (int col = 0; col < NEXT_PREVIEW_SIZE; col++) {
@@ -384,15 +437,18 @@ public class GuiController implements Initializable {
     private void moveDown(MoveEvent event) {
         if (isPause.getValue() == Boolean.FALSE) {
             DownData downData = eventListener.onDownEvent(event);
-            if (downData.getClearRow() != null && downData.getClearRow().getLinesRemoved() > 0) {
-                NotificationPanel notificationPanel = new NotificationPanel("+" + downData.getClearRow().getScoreBonus());
+            ClearRow clearRow = downData.getClearRow();
+            
+            // Always check for cleared rows (ClearRow is never null now)
+            if (clearRow.getLinesRemoved() > 0) {
+                NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
 
                 // Update lines cleared and level
-                updateLevelAndLines(downData.getClearRow().getLinesRemoved());
-
+                updateLevelAndLines(clearRow.getLinesRemoved());
             }
+            
             refreshBrick(downData.getViewData());
         }
         gamePanel.requestFocus();
@@ -400,26 +456,21 @@ public class GuiController implements Initializable {
 
     private void hardDrop() {
         if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
-            // Keep moving the brick down until it can't move anymore
-            boolean canMove = true;
-            int dropDistance = 0;
+            DownData downData = eventListener.onHardDropEvent(new MoveEvent(EventType.HARD_DROP, EventSource.USER));
+            
+            // Handle cleared rows if any
+            ClearRow clearRow = downData.getClearRow();
+            if (clearRow.getLinesRemoved() > 0) {
+                NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
+                groupNotification.getChildren().add(notificationPanel);
+                notificationPanel.showScore(groupNotification.getChildren());
 
-            while (canMove) {
-                DownData downData = eventListener.onDownEvent(new MoveEvent(EventType.DOWN, EventSource.USER));
-                canMove = (downData.getClearRow() == null); // If clearRow is null, brick is still moving
-                if (canMove) {
-                    refreshBrick(downData.getViewData());
-                    dropDistance++;
-                }
+                // Update lines cleared and level
+                updateLevelAndLines(clearRow.getLinesRemoved());
             }
-
-            // Add score bonus based on drop distance
-            if (dropDistance > 0) {
-
-                int bonusPoints = dropDistance * 2;
-
-                System.out.println("Hard drop: " + dropDistance + " rows, bonus: " + bonusPoints);
-            }
+            
+            // Refresh the brick display
+            refreshBrick(downData.getViewData());
         }
         gamePanel.requestFocus();
     }
@@ -434,12 +485,20 @@ public class GuiController implements Initializable {
 
     private void updateLevelAndLines(int linesRemoved) {
         if (linesRemoved > 0) {
-            linesCleared.set(linesCleared.get() + linesRemoved);
+            // Update lines cleared
+            int newLinesTotal = linesCleared.get() + linesRemoved;
+            linesCleared.setValue(newLinesTotal);
+            
+            // Update label directly
+            if (linesLabel != null) {
+                linesLabel.setText("Lines: " + newLinesTotal);
+            }
 
             // Increase level every 15 lines cleared
-            int newLevel = (linesCleared.get() / 15) + 1;
-            if (newLevel > currentLevel.get()) {
-                currentLevel.set(newLevel);
+            int newLevel = (newLinesTotal / 15) + 1;
+            int oldLevel = currentLevel.get();
+            if (newLevel != oldLevel) {
+                currentLevel.setValue(newLevel);
                 updateGameSpeed();
             }
         }
@@ -476,7 +535,7 @@ public class GuiController implements Initializable {
         
         if (containerWidth <= 0 || containerHeight <= 0) return;
 
-        // Get the actual preferred size of the scaling container
+        // Get preferred size of the scaling container
         double contentWidth = scalingContainer.getPrefWidth() > 0 ? scalingContainer.getPrefWidth() : BASE_GAME_WIDTH;
         double contentHeight = scalingContainer.getPrefHeight() > 0 ? scalingContainer.getPrefHeight() : BASE_GAME_HEIGHT;
 
@@ -518,7 +577,6 @@ public class GuiController implements Initializable {
 
             // Re-center the game elements if needed
             if (gamePanel != null && brickPanel != null) {
-                // Optional: Add any additional centering logic here
                 System.out.println("Fullscreen changed - recentering game");
             }
         }
@@ -543,7 +601,6 @@ public class GuiController implements Initializable {
         gameOverPanel.setVisible(false);
 
         // Reset game statistics
-        currentScore.set(0);
         currentLevel.set(1);
         linesCleared.set(0);
 
@@ -560,9 +617,41 @@ public class GuiController implements Initializable {
 
         isPause.setValue(Boolean.FALSE);
         isGameOver.setValue(Boolean.FALSE);
+        
+        // Reset pause button state
+        if (pauseButton != null) {
+            pauseButton.setText("Pause");
+            pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;");
+        }
     }
 
     public void pauseGame(ActionEvent actionEvent) {
+        if (isGameOver.getValue() == Boolean.TRUE) {
+            return;
+        }
+        
+        boolean currentPauseState = isPause.getValue();
+        isPause.setValue(!currentPauseState);
+        
+        if (isPause.getValue()) {
+            // Pause the game
+            if (timeLine != null) {
+                timeLine.pause();
+            }
+            if (pauseButton != null) {
+                pauseButton.setText("Resume");
+                pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #4CAF50; -fx-text-fill: white;");
+            }
+        } else {
+            // Resume the game
+            if (timeLine != null) {
+                timeLine.play();
+            }
+            if (pauseButton != null) {
+                pauseButton.setText("Pause");
+                pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;");
+            }
+        }
         gamePanel.requestFocus();
     }
 

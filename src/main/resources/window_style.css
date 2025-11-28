@@ -70,3 +70,37 @@
     -fx-fill: yellow;
     -fx-text-fill: yellow;
 }
+
+.game-border {
+    -fx-stroke: linear-gradient(from 0% 0% to 100% 100%, #4a90e2, #357abd, #2a5f8f);
+    -fx-stroke-width: 4;
+    -fx-stroke-type: inside;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
+    -fx-effect: dropshadow(gaussian, rgba(74, 144, 226, 0.5), 8, 0.5, 0, 0);
+}
+
+.game-border-outer {
+    -fx-stroke: linear-gradient(from 0% 0% to 100% 100%, #6ba3f0, #4a90e2);
+    -fx-stroke-width: 2;
+    -fx-stroke-type: outside;
+    -fx-arc-width: 10;
+    -fx-arc-height: 10;
+}
+
+.hud-border {
+    -fx-stroke: linear-gradient(from 0% 0% to 100% 100%, #8b7fa8, #6b5f88, #4a3f5f);
+    -fx-stroke-width: 3;
+    -fx-stroke-type: inside;
+    -fx-arc-width: 6;
+    -fx-arc-height: 6;
+    -fx-effect: dropshadow(gaussian, rgba(139, 127, 168, 0.4), 6, 0.5, 0, 0);
+}
+
+.hud-border-outer {
+    -fx-stroke: linear-gradient(from 0% 0% to 100% 100%, #a89fc0, #8b7fa8);
+    -fx-stroke-width: 2;
+    -fx-stroke-type: outside;
+    -fx-arc-width: 8;
+    -fx-arc-height: 8;
+}

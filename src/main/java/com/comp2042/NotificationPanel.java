@@ -4,11 +4,8 @@ import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.effect.Effect;
 import javafx.scene.effect.Glow;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -17,27 +14,44 @@ import javafx.util.Duration;
 public class NotificationPanel extends BorderPane {
 
     public NotificationPanel(String text) {
-        setMinHeight(200);
+        // Set initial position and size
+        setLayoutX(0);
+        setLayoutY(0);
+        setPrefWidth(220);
+        setPrefHeight(60);
         setMinWidth(220);
+        setMinHeight(60);
+        setMaxWidth(220);
+        setMaxHeight(60);
+        
+        // Create and style the label
         final Label score = new Label(text);
         score.getStyleClass().add("bonusStyle");
-        final Effect glow = new Glow(0.6);
+        final Glow glow = new Glow(0.8);
         score.setEffect(glow);
-        score.setTextFill(Color.WHITE);
+        score.setTextFill(Color.YELLOW);
+        score.setStyle("-fx-alignment: center;");
         setCenter(score);
-
+        
+        // Make sure the panel is visible
+        setOpacity(1.0);
     }
 
     public void showScore(ObservableList<Node> list) {
+        // Animate upward and fade out
         FadeTransition ft = new FadeTransition(Duration.millis(2000), this);
-        TranslateTransition tt = new TranslateTransition(Duration.millis(2500), this);
-        tt.setToY(this.getLayoutY() - 40);
-        ft.setFromValue(1);
-        ft.setToValue(0);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(2000), this);
+        
+        // Start from current position (0, 0) and move up 60 pixels
+        tt.setFromY(0);
+        tt.setToY(-60);
+        
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+        
         ParallelTransition transition = new ParallelTransition(tt, ft);
-        transition.setOnFinished(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
+        transition.setOnFinished(event -> {
+            if (list.contains(NotificationPanel.this)) {
                 list.remove(NotificationPanel.this);
             }
         });

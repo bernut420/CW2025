@@ -17,24 +17,31 @@ public class GameController implements InputEventListener {
     @Override
     public DownData onDownEvent(MoveEvent event) {
         boolean canMove = board.moveBrickDown();
-        ClearRow clearRow = null;
+        ClearRow clearRow;
+        
         if (!canMove) {
+            // Brick landed - merge it and check for cleared rows
             board.mergeBrickToBackground();
             clearRow = board.clearRows();
+            
             if (clearRow.getLinesRemoved() > 0) {
                 board.getScore().add(clearRow.getScoreBonus());
             }
+            
             if (board.createNewBrick()) {
                 viewGuiController.gameOver();
             }
-
+            
             viewGuiController.refreshGameBackground(board.getBoardMatrix());
-
         } else {
+            // Brick is still moving
             if (event.getEventSource() == EventSource.USER) {
                 board.getScore().add(1);
             }
+
+            clearRow = new ClearRow(0, board.getBoardMatrix(), 0);
         }
+        
         return new DownData(clearRow, board.getViewData());
     }
 
@@ -51,9 +58,8 @@ public class GameController implements InputEventListener {
         }
 
         // Now process the brick landing
-        ClearRow clearRow = null;
         board.mergeBrickToBackground();
-        clearRow = board.clearRows();
+        ClearRow clearRow = board.clearRows();
 
         if (clearRow.getLinesRemoved() > 0) {
             board.getScore().add(clearRow.getScoreBonus());

@@ -13,13 +13,25 @@
            style="-fx-background-color: #1a1a1a;">
     <Pane fx:id="scalingContainer" prefWidth="480" prefHeight="640">
 
-        <!-- Main playfield border -->
+        <!-- Control buttons in top left -->
+        <HBox spacing="10" layoutX="30" layoutY="10">
+            <Button fx:id="pauseButton" text="Pause" onAction="#pauseGame"
+                    style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;"/>
+            <Button fx:id="restartButton" text="Restart" onAction="#newGame"
+                    style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #2196F3; -fx-text-fill: white;"/>
+        </HBox>
+
+        
+
+        <!-- Main playfield border - main -->
         <Rectangle fx:id="gameBorder"
                    layoutX="30" layoutY="60"
                    width="220" height="520"
                    fill="transparent"
-                   stroke="#666666"
-                   strokeWidth="3"/>
+                   stroke="#4a90e2"
+                   strokeWidth="4"
+                   arcWidth="8"
+                   arcHeight="8"/>
 
         <!-- Game Area -->
         <GridPane fx:id="gamePanel" hgap="1" vgap="1" layoutX="32" layoutY="62"/>
@@ -30,17 +42,31 @@
         <!-- Active brick overlay -->
         <GridPane fx:id="brickPanel" hgap="1" vgap="1" layoutX="32" layoutY="62"/>
 
-        <!-- Right-side HUD panel -->
-        <Rectangle layoutX="295" layoutY="60"
+        <!-- Right-side HUD panel - outer glow -->
+        <Rectangle fx:id="hudBorderOuter"
+                   layoutX="298" layoutY="58"
+                   width="164" height="404"
+                   fill="transparent"
+                   stroke="#a89fc0"
+                   strokeWidth="2"
+                   arcWidth="8"
+                   arcHeight="8"/>
+        
+        <!-- Right-side HUD panel - main -->
+        <Rectangle fx:id="hudBorder"
+                   layoutX="300" layoutY="60"
                    width="160" height="400"
                    fill="transparent"
-                   stroke="#666666"
-                   strokeWidth="2"/>
+                   stroke="#8b7fa8"
+                   strokeWidth="3"
+                   arcWidth="6"
+                   arcHeight="6"/>
+        
 
         <!-- HUD content -->
-        <VBox spacing="20" layoutX="310" layoutY="70">
+        <VBox spacing="20" layoutX="310" layoutY="70" prefWidth="140" alignment="CENTER">
             <!-- Score / Level / Lines -->
-            <VBox spacing="5" alignment="CENTER_LEFT">
+            <VBox spacing="5" alignment="CENTER">
                 <Label fx:id="scoreLabel" text="Score: 0"
                        style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                 <Label fx:id="levelLabel" text="Level: 1"
@@ -50,17 +76,21 @@
             </VBox>
 
             <!-- Hold Section -->
-            <VBox spacing="5" alignment="CENTER">
+            <VBox spacing="5" alignment="CENTER" prefWidth="140">
                 <Label text="Hold"
                        style="-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;"/>
-                <GridPane fx:id="holdBlockPanel" hgap="1" vgap="1"/>
+                <HBox alignment="CENTER">
+                    <GridPane fx:id="holdBlockPanel" hgap="1" vgap="1" alignment="CENTER"/>
+                </HBox>
             </VBox>
 
             <!-- Next Section -->
-            <VBox spacing="5" alignment="CENTER">
+            <VBox spacing="5" alignment="CENTER" prefWidth="140">
                 <Label text="Next"
                        style="-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;"/>
-                <GridPane fx:id="nextBlockPanel" hgap="1" vgap="1"/>
+                <HBox alignment="CENTER">
+                    <GridPane fx:id="nextBlockPanel" hgap="1" vgap="1" alignment="CENTER"/>
+                </HBox>
             </VBox>
         </VBox>
 
