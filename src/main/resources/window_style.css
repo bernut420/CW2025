@@ -1,10 +1,7 @@
-.root {
-    -fx-background-image: url("Black.png");
-}
 
 .nextBrick {
     -fx-border-width: 2px;
-    -fx-border-color: whitesmoke;
+    -fx-border-color: whitespace;
     -fx-border-radius: 17px;
 }
 
@@ -35,7 +32,7 @@
     -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-fill: white;
-    -fx-effect: dropshadow(three-pass-box, rgba(255, 255, 255, 0.2), 1, 0.0, 0, 1);
+    -fx-effect: drop shadow(three-pass-box, rgba(255, 255, 255, 0.2), 1, 0.0, 0, 1);
 }
 
 .rectangleStyle {
@@ -60,13 +57,13 @@
 
 .gameOverStyle {
     -fx-font-family: "Let's go Digital";
-    -fx-font-size: 48;
+    -fx-font-size: 48px;
     -fx-background-color: red;
 }
 
-.scoreClass{
+.scoreClass {
     -fx-font-family: "Let's go Digital";
-    -fx-font-size: 38;
+    -fx-font-size: 38px;
     -fx-fill: yellow;
     -fx-text-fill: yellow;
 }
@@ -77,7 +74,7 @@
     -fx-stroke-type: inside;
     -fx-arc-width: 8;
     -fx-arc-height: 8;
-    -fx-effect: dropshadow(gaussian, rgba(74, 144, 226, 0.5), 8, 0.5, 0, 0);
+    -fx-effect: drop shadow(gaussian, rgba(74, 144, 226, 0.5), 8, 0.5, 0, 0);
 }
 
 .game-border-outer {
@@ -94,7 +91,7 @@
     -fx-stroke-type: inside;
     -fx-arc-width: 6;
     -fx-arc-height: 6;
-    -fx-effect: dropshadow(gaussian, rgba(139, 127, 168, 0.4), 6, 0.5, 0, 0);
+    -fx-effect: drop shadow(gaussian, rgba(139, 127, 168, 0.4), 6, 0.5, 0, 0);
 }
 
 .hud-border-outer {
