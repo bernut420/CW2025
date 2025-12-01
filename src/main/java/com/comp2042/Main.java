@@ -22,11 +22,10 @@ public class Main extends Application {
         // Enable fullscreen support
         primaryStage.setMinWidth(300);
         primaryStage.setMinHeight(500);
-        primaryStage.setFullScreenExitHint("Press ESC to exit fullscreen");
-        primaryStage.setFullScreenExitKeyCombination(KeyCombination.valueOf("ESC"));
 
         primaryStage.setScene(scene);
         primaryStage.setFullScreen(true);
+        primaryStage.setFullScreenExitHint(""); // Remove the "Press ESC to exit full screen" prompt
         primaryStage.show();
         
         // Center the game after the window is shown and fullscreen is activated
