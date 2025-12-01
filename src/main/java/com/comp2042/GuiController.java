@@ -2,8 +2,6 @@ package com.comp2042;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.animation.FadeTransition;
-import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -18,14 +16,7 @@ import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.ButtonType;
-import javafx.stage.Popup;
-import javafx.stage.Window;
 import javafx.geometry.Pos;
-import java.util.Optional;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -41,7 +32,6 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 
 public class GuiController implements Initializable {
@@ -73,9 +63,6 @@ public class GuiController implements Initializable {
 
     @FXML
     private Label scoreLabel;
-
-    @FXML
-    private Label highScoreLabel;
 
     @FXML
     private Label levelLabel;
@@ -111,12 +98,7 @@ public class GuiController implements Initializable {
     private Button exitButton;
 
     @FXML
-    private Button menuButton;
-
-    private Popup menuPopup;
-    private Button resumeMenuButton;
-    private Button settingsMenuButton;
-    private Button exitMenuButton;
+    private Button pauseButton;
 
     @FXML
     private Button restartButton;
@@ -146,13 +128,6 @@ public class GuiController implements Initializable {
     private static final double BASE_GAME_WIDTH = 480; // Total width including right-side HUD
     private static final double BASE_GAME_HEIGHT = 640; // Total height
 
-    // Settings
-    private SettingsManager settingsManager;
-    private static final double BASE_GAME_SPEED = 400.0; // milliseconds
-
-    // High Score
-    private HighScoreManager highScoreManager;
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Font.loadFont(getClass().getClassLoader().getResource("digital.ttf").toExternalForm(), 38);
@@ -161,7 +136,6 @@ public class GuiController implements Initializable {
 
         initializeScoreDisplay();
         initializeBorders();
-        initializeMenu();
         
         // Hide game initially, show start screen
         if (scalingContainer != null) {
@@ -232,21 +206,9 @@ public class GuiController implements Initializable {
     }
 
     private void initializeScoreDisplay() {
-        // Initialize managers
-        highScoreManager = new HighScoreManager();
-        settingsManager = new SettingsManager();
-        
-        // Apply loaded settings
-        if (ghostPanel != null) {
-            ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
-        }
-        
         // Bind labels to properties if they exist
         if (scoreLabel != null) {
             scoreLabel.textProperty().bind(currentScore.asString("Score: %d"));
-        }
-        if (highScoreLabel != null) {
-            updateHighScoreDisplay();
         }
         if (levelLabel != null) {
             levelLabel.textProperty().bind(currentLevel.asString("Level: %d"));
@@ -260,24 +222,6 @@ public class GuiController implements Initializable {
             });
             // Set initial value
             linesLabel.setText("Lines: " + linesCleared.get());
-        }
-        
-        // Listen for score changes to update high score
-        currentScore.addListener((obs, oldVal, newVal) -> {
-            checkAndUpdateHighScore(newVal.intValue());
-        });
-    }
-
-    private void updateHighScoreDisplay() {
-        if (highScoreLabel != null && highScoreManager != null) {
-            highScoreLabel.setText("High Score: " + highScoreManager.getHighScore());
-        }
-    }
-
-    private void checkAndUpdateHighScore(int currentScore) {
-        if (highScoreManager != null && currentScore > highScoreManager.getHighScore()) {
-            highScoreManager.updateHighScore(currentScore);
-            updateHighScoreDisplay();
         }
     }
 
@@ -300,72 +244,6 @@ public class GuiController implements Initializable {
             hudShadow.setOffsetX(0);
             hudShadow.setOffsetY(0);
             hudBorder.setEffect(hudShadow);
-        }
-    }
-
-    private void initializeMenu() {
-        // Create popup menu
-        menuPopup = new Popup();
-        menuPopup.setAutoHide(true);
-        
-        // Create VBox container for menu buttons
-        VBox menuContainer = new VBox(2);
-        menuContainer.setStyle("-fx-background-color: #2a2a2a; -fx-border-color: #4a4a4a; -fx-border-width: 1px; -fx-padding: 4px;");
-        
-        // Create menu buttons
-        resumeMenuButton = new Button("Pause");
-        resumeMenuButton.setPrefWidth(100);
-        resumeMenuButton.setPrefHeight(30);
-        resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
-        resumeMenuButton.setOnAction(e -> {
-            menuPopup.hide();
-            resumeGame(e);
-        });
-        resumeMenuButton.setOnMouseEntered(e -> resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
-        resumeMenuButton.setOnMouseExited(e -> resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
-        
-        settingsMenuButton = new Button("Settings");
-        settingsMenuButton.setPrefWidth(100);
-        settingsMenuButton.setPrefHeight(30);
-        settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
-        settingsMenuButton.setOnAction(e -> {
-            menuPopup.hide();
-            openSettings(e);
-        });
-        settingsMenuButton.setOnMouseEntered(e -> settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
-        settingsMenuButton.setOnMouseExited(e -> settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
-        
-        exitMenuButton = new Button("Exit");
-        exitMenuButton.setPrefWidth(100);
-        exitMenuButton.setPrefHeight(30);
-        exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
-        exitMenuButton.setOnAction(e -> {
-            menuPopup.hide();
-            exitGame(e);
-        });
-        exitMenuButton.setOnMouseEntered(e -> exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
-        exitMenuButton.setOnMouseExited(e -> exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
-        
-        menuContainer.getChildren().addAll(resumeMenuButton, settingsMenuButton, exitMenuButton);
-        menuPopup.getContent().add(menuContainer);
-        
-        updateResumeMenuItemText();
-    }
-
-    @FXML
-    public void showMenu(ActionEvent actionEvent) {
-        if (menuButton != null && menuPopup != null) {
-            // Calculate position below the button
-            Window window = menuButton.getScene().getWindow();
-            
-            // Get button position relative to scene
-            javafx.geometry.Point2D point = menuButton.localToScene(0, 0);
-            
-            // Calculate absolute screen coordinates
-            double x = window.getX() + point.getX() + menuButton.getScene().getX();
-            double y = window.getY() + point.getY() + menuButton.getScene().getY() + menuButton.getHeight() + 2;
-            
-            menuPopup.show(window, x, y);
         }
     }
 
@@ -407,12 +285,6 @@ public class GuiController implements Initializable {
                     ghostPanel.add(rectangle, j, i);
                 }
             }
-            // Apply ghost visibility setting
-            if (settingsManager != null) {
-                ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
-            } else {
-                ghostPanel.setVisible(true);
-            }
         }
         
         initialiseNextBrickPanel(brick.getNextBrickData());
@@ -426,7 +298,7 @@ public class GuiController implements Initializable {
         linesCleared.set(0);
 
         timeLine = new Timeline(new KeyFrame(
-                Duration.millis(BASE_GAME_SPEED),
+                Duration.millis(400),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
         ));
         timeLine.setCycleCount(Timeline.INDEFINITE);
@@ -569,9 +441,6 @@ public class GuiController implements Initializable {
             
             // Always check for cleared rows (ClearRow is never null now)
             if (clearRow.getLinesRemoved() > 0) {
-                // Animate line clear
-                animateLineClear(clearRow.getClearedRowIndices());
-                
                 NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
@@ -580,13 +449,7 @@ public class GuiController implements Initializable {
                 updateLevelAndLines(clearRow.getLinesRemoved());
             }
             
-            // Always refresh brick to show current state (including during lock delay)
             refreshBrick(downData.getViewData());
-            
-            // Refresh background only if no lines were cleared (animation handles it otherwise)
-            if (clearRow.getLinesRemoved() == 0 && eventListener != null) {
-                refreshGameBackground(eventListener.getBoardMatrix());
-            }
         }
         gamePanel.requestFocus();
     }
@@ -598,20 +461,12 @@ public class GuiController implements Initializable {
             // Handle cleared rows if any
             ClearRow clearRow = downData.getClearRow();
             if (clearRow.getLinesRemoved() > 0) {
-                // Animate line clear - this will handle background refresh after animation
-                animateLineClear(clearRow.getClearedRowIndices());
-                
                 NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
 
                 // Update lines cleared and level
                 updateLevelAndLines(clearRow.getLinesRemoved());
-            } else {
-                // No lines cleared, refresh background normally
-                if (eventListener != null) {
-                    refreshGameBackground(eventListener.getBoardMatrix());
-                }
             }
             
             // Refresh the brick display
@@ -626,44 +481,6 @@ public class GuiController implements Initializable {
             refreshBrick(data);
         }
         gamePanel.requestFocus();
-    }
-
-    private void animateLineClear(List<Integer> clearedRowIndices) {
-        if (clearedRowIndices == null || displayMatrix == null || clearedRowIndices.isEmpty()) {
-            return;
-        }
-        
-        // Create parallel animation for all cleared rows (flash effect)
-        javafx.animation.ParallelTransition parallel = new javafx.animation.ParallelTransition();
-        
-        for (Integer rowIndex : clearedRowIndices) {
-            // Convert board row index to display row index (accounting for hidden rows)
-            int displayRow = rowIndex - HIDDEN_ROWS;
-            if (displayRow >= 0 && displayRow < displayMatrix.length) {
-                for (int col = 0; col < displayMatrix[displayRow].length; col++) {
-                    if (displayMatrix[displayRow][col] != null) {
-                        Rectangle rect = displayMatrix[displayRow][col];
-                        FadeTransition fade = new FadeTransition(Duration.millis(150), rect);
-                        fade.setFromValue(1.0);
-                        fade.setToValue(0.1);
-                        fade.setCycleCount(4);
-                        fade.setAutoReverse(true);
-                        parallel.getChildren().add(fade);
-                    }
-                }
-            }
-        }
-        
-        // After animation completes refresh the background to show cleared state
-        parallel.setOnFinished(e -> {
-            Platform.runLater(() -> {
-                if (eventListener != null) {
-                    refreshGameBackground(eventListener.getBoardMatrix());
-                }
-            });
-        });
-        
-        parallel.play();
     }
 
     private void updateLevelAndLines(int linesRemoved) {
@@ -692,7 +509,7 @@ public class GuiController implements Initializable {
             timeLine.stop();
             // Increase speed as level increases (max 5x speed)
             double speedFactor = Math.max(0.2, 1.0 - (currentLevel.get() - 1) * 0.15);
-            Duration newDuration = Duration.millis(BASE_GAME_SPEED * speedFactor);
+            Duration newDuration = Duration.millis(400 * speedFactor);
 
             timeLine = new Timeline(new KeyFrame(
                     newDuration,
@@ -775,29 +592,8 @@ public class GuiController implements Initializable {
 
     public void gameOver() {
         timeLine.stop();
-        isGameOver.setValue(Boolean.TRUE);
-        
-        // Check and update high score when game ends
-        if (highScoreManager != null) {
-            checkAndUpdateHighScore(currentScore.get());
-        }
-        
-        // Set up button actions
-        if (gameOverPanel != null) {
-            gameOverPanel.getPlayAgainButton().setOnAction(e -> newGame(e));
-            gameOverPanel.getMainMenuButton().setOnAction(e -> {
-                // Hide game, show start screen
-                if (scalingContainer != null) {
-                    scalingContainer.setVisible(false);
-                }
-                if (startScreen != null) {
-                    startScreen.setVisible(true);
-                }
-                gameOverPanel.setVisible(false);
-            });
-        }
-        
         gameOverPanel.setVisible(true);
+        isGameOver.setValue(Boolean.TRUE);
     }
 
     public void newGame(ActionEvent actionEvent) {
@@ -813,7 +609,7 @@ public class GuiController implements Initializable {
 
         // Reset game speed to initial value
         timeLine = new Timeline(new KeyFrame(
-                Duration.millis(BASE_GAME_SPEED),
+                Duration.millis(400),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
         ));
         timeLine.setCycleCount(Timeline.INDEFINITE);
@@ -822,12 +618,14 @@ public class GuiController implements Initializable {
         isPause.setValue(Boolean.FALSE);
         isGameOver.setValue(Boolean.FALSE);
         
-        // Reset menu button state
-        updateResumeMenuItemText();
+        // Reset pause button state
+        if (pauseButton != null) {
+            pauseButton.setText("Pause");
+            pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;");
+        }
     }
 
-    @FXML
-    public void resumeGame(ActionEvent actionEvent) {
+    public void pauseGame(ActionEvent actionEvent) {
         if (isGameOver.getValue() == Boolean.TRUE) {
             return;
         }
@@ -840,71 +638,20 @@ public class GuiController implements Initializable {
             if (timeLine != null) {
                 timeLine.pause();
             }
+            if (pauseButton != null) {
+                pauseButton.setText("Resume");
+                pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #4CAF50; -fx-text-fill: white;");
+            }
         } else {
             // Resume the game
             if (timeLine != null) {
                 timeLine.play();
             }
-        }
-        updateResumeMenuItemText();
-        gamePanel.requestFocus();
-    }
-
-    private void updateResumeMenuItemText() {
-        if (resumeMenuButton != null) {
-            if (isPause.getValue()) {
-                resumeMenuButton.setText("Resume");
-            } else {
-                resumeMenuButton.setText("Pause");
+            if (pauseButton != null) {
+                pauseButton.setText("Pause");
+                pauseButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;");
             }
         }
-    }
-
-    @FXML
-    public void openSettings(ActionEvent actionEvent) {
-        // Pause the game when opening settings
-        if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
-            if (timeLine != null) {
-                timeLine.pause();
-            }
-            isPause.setValue(Boolean.TRUE);
-            updateResumeMenuItemText();
-        }
-        
-        // Create and show settings dialog
-        SettingsDialog settingsDialog = new SettingsDialog();
-        
-        // Set dialog owner to center it on the main window
-        if (gameContainer != null && gameContainer.getScene() != null && gameContainer.getScene().getWindow() != null) {
-            settingsDialog.initOwner(gameContainer.getScene().getWindow());
-        }
-        
-        // Load current settings
-        if (settingsManager != null) {
-            settingsDialog.setGhostPieceEnabled(settingsManager.isGhostPieceEnabled());
-            settingsDialog.setMusicEnabled(settingsManager.isMusicEnabled());
-            settingsDialog.setMusicVolume(settingsManager.getMusicVolume());
-        }
-        
-        // Show dialog and wait for result
-        Optional<ButtonType> result = settingsDialog.showAndWait();
-        
-        if (result.isPresent() && result.get() == ButtonType.OK && settingsManager != null) {
-            // Apply and save settings
-            settingsManager.setGhostPieceEnabled(settingsDialog.isGhostPieceEnabled());
-            settingsManager.setMusicEnabled(settingsDialog.isMusicEnabled());
-            settingsManager.setMusicVolume(settingsDialog.getMusicVolume());
-            
-            // Apply ghost visibility immediately
-            if (ghostPanel != null) {
-                ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
-            }
-            
-            //  Will apply music setting when music feature is implemented
-            //  Will apply music volume when music feature is implemented
- 
-        }
-        
         gamePanel.requestFocus();
     }
 

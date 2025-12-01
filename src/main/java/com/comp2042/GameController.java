@@ -5,11 +5,6 @@ public class GameController implements InputEventListener {
     private Board board = new SimpleBoard(25, 10);
 
     private final GuiController viewGuiController;
-    
-    // Lock delay - allows piece adjustments after landing
-    private static final long LOCK_DELAY_MS = 500; // 500ms delay before locking
-    private long lockStartTime = -1;
-    private boolean isLocking = false;
 
     public GameController(GuiController c) {
         viewGuiController = c;
@@ -25,49 +20,26 @@ public class GameController implements InputEventListener {
         ClearRow clearRow;
         
         if (!canMove) {
-            // Brick landed - start lock delay
-            if (!isLocking) {
-                isLocking = true;
-                lockStartTime = System.currentTimeMillis();
+            // Brick landed - merge it and check for cleared rows
+            board.mergeBrickToBackground();
+            clearRow = board.clearRows();
+            
+            if (clearRow.getLinesRemoved() > 0) {
+                board.getScore().add(clearRow.getScoreBonus());
             }
             
-            // Check if lock delay has passed
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lockStartTime >= LOCK_DELAY_MS) {
-                // Lock delay expired - merge brick and process
-                isLocking = false;
-                lockStartTime = -1;
-                
-                board.mergeBrickToBackground();
-                clearRow = board.clearRows();
-                
-                if (clearRow.getLinesRemoved() > 0) {
-                    board.getScore().add(clearRow.getScoreBonus());
-                }
-                
-                if (board.createNewBrick()) {
-                    viewGuiController.gameOver();
-                }
-                
-                // Refresh background only if no lines were cleared (animation handles it otherwise)
-                if (clearRow.getLinesRemoved() == 0) {
-                    viewGuiController.refreshGameBackground(board.getBoardMatrix());
-                }
-            } else {
-                // Still in lock delay - piece can still be moved, return current state
-                clearRow = new ClearRow(0, board.getBoardMatrix(), 0, null);
+            if (board.createNewBrick()) {
+                viewGuiController.gameOver();
             }
+            
+            viewGuiController.refreshGameBackground(board.getBoardMatrix());
         } else {
-            // Brick moved down successfully - reset lock delay
-            isLocking = false;
-            lockStartTime = -1;
-            
             // Brick is still moving
             if (event.getEventSource() == EventSource.USER) {
                 board.getScore().add(1);
             }
 
-            clearRow = new ClearRow(0, board.getBoardMatrix(), 0, null);
+            clearRow = new ClearRow(0, board.getBoardMatrix(), 0);
         }
         
         return new DownData(clearRow, board.getViewData());
@@ -109,31 +81,19 @@ public class GameController implements InputEventListener {
 
     @Override
     public ViewData onLeftEvent(MoveEvent event) {
-        // Allow movement during lock delay - resets the delay
-        if (board.moveBrickLeft()) {
-            isLocking = false;
-            lockStartTime = -1;
-        }
+        board.moveBrickLeft();
         return board.getViewData();
     }
 
     @Override
     public ViewData onRightEvent(MoveEvent event) {
-        // Allow movement during lock delay - resets the delay
-        if (board.moveBrickRight()) {
-            isLocking = false;
-            lockStartTime = -1;
-        }
+        board.moveBrickRight();
         return board.getViewData();
     }
 
     @Override
     public ViewData onRotateEvent(MoveEvent event) {
-        // Allow rotation during lock delay - resets the delay
-        if (board.rotateLeftBrick()) {
-            isLocking = false;
-            lockStartTime = -1;
-        }
+        board.rotateLeftBrick();
         return board.getViewData();
     }
 
@@ -150,10 +110,5 @@ public class GameController implements InputEventListener {
     public void createNewGame() {
         board.newGame();
         viewGuiController.refreshGameBackground(board.getBoardMatrix());
-    }
-    
-    @Override
-    public int[][] getBoardMatrix() {
-        return board.getBoardMatrix();
     }
 }

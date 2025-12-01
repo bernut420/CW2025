@@ -15,7 +15,7 @@
 
         <!-- Control buttons in top left -->
         <HBox spacing="10" layoutX="30" layoutY="10">
-            <Button fx:id="menuButton" text="Menu" onAction="#showMenu"
+            <Button fx:id="pauseButton" text="Pause" onAction="#pauseGame"
                     style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #FF9800; -fx-text-fill: white;"/>
             <Button fx:id="restartButton" text="Restart" onAction="#newGame"
                     style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-pref-width: 80; -fx-pref-height: 30; -fx-background-color: #2196F3; -fx-text-fill: white;"/>
@@ -45,7 +45,7 @@
         <!-- Right-side HUD panel - outer glow -->
         <Rectangle fx:id="hudBorderOuter"
                    layoutX="298" layoutY="58"
-                   width="164" height="414"
+                   width="164" height="404"
                    fill="transparent"
                    stroke="#a89fc0"
                    strokeWidth="2"
@@ -55,7 +55,7 @@
         <!-- Right-side HUD panel - main -->
         <Rectangle fx:id="hudBorder"
                    layoutX="300" layoutY="60"
-                   width="160" height="410"
+                   width="160" height="400"
                    fill="transparent"
                    stroke="#8b7fa8"
                    strokeWidth="3"
@@ -69,8 +69,6 @@
             <VBox spacing="5" alignment="CENTER">
                 <Label fx:id="scoreLabel" text="Score: 0"
                        style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label fx:id="highScoreLabel" text="High Score: 0"
-                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #FFD700;"/>
                 <Label fx:id="levelLabel" text="Level: 1"
                        style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                 <Label fx:id="linesLabel" text="Lines: 0"
@@ -97,7 +95,7 @@
         </VBox>
 
         <!-- Notifications and Game Over -->
-        <Group fx:id="groupNotification" layoutX="62" layoutY="220">
+        <Group fx:id="groupNotification" layoutX="14" layoutY="220">
             <VBox alignment="CENTER">
                 <GameOverPanel fx:id="gameOverPanel"/>
             </VBox>
