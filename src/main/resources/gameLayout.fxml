@@ -23,13 +23,26 @@
 
         
 
+        <!-- Background behind game border for better visibility -->
+        <Rectangle layoutX="30" layoutY="60"
+                   width="265" height="600"
+                   fill="rgba(26, 26, 26, 0.85)"
+                   arcWidth="8"
+                   arcHeight="8"/>
+
+        <!-- Game border - outer glow -->
+        <Rectangle fx:id="gameBorderOuter"
+                   layoutX="28" layoutY="58"
+                   width="267" height="605"
+                   fill="transparent"
+                   arcWidth="10"
+                   arcHeight="10"/>
+
         <!-- Main playfield border - main -->
         <Rectangle fx:id="gameBorder"
                    layoutX="30" layoutY="60"
                    width="220" height="520"
                    fill="transparent"
-                   stroke="#4a90e2"
-                   strokeWidth="4"
                    arcWidth="8"
                    arcHeight="8"/>
 
@@ -42,13 +55,18 @@
         <!-- Active brick overlay -->
         <GridPane fx:id="brickPanel" hgap="1" vgap="1" layoutX="32" layoutY="62"/>
 
+        <!-- Background behind HUD border for better visibility -->
+        <Rectangle layoutX="300" layoutY="60"
+                   width="160" height="410"
+                   fill="rgba(26, 26, 26, 0.85)"
+                   arcWidth="6"
+                   arcHeight="6"/>
+
         <!-- Right-side HUD panel - outer glow -->
         <Rectangle fx:id="hudBorderOuter"
                    layoutX="298" layoutY="58"
                    width="164" height="414"
                    fill="transparent"
-                   stroke="#a89fc0"
-                   strokeWidth="2"
                    arcWidth="8"
                    arcHeight="8"/>
         
@@ -57,8 +75,6 @@
                    layoutX="300" layoutY="60"
                    width="160" height="410"
                    fill="transparent"
-                   stroke="#8b7fa8"
-                   strokeWidth="3"
                    arcWidth="6"
                    arcHeight="6"/>
         
@@ -104,11 +120,26 @@
         </Group>
     </Pane>
 
+    <!-- Keybinds table in top left (outside scaling container to avoid scaling issues) -->
+    <Pane fx:id="keybindsPane" managed="false">
+        <VBox fx:id="keybindsContainer" spacing="8" style="-fx-background-color: rgba(26, 26, 26, 0.9); -fx-background-radius: 8px; -fx-padding: 12px; -fx-border-color: linear-gradient(#5ba0f2, #4a90e2); -fx-border-width: 2px; -fx-border-radius: 8px;">
+            <Label text="CONTROLS" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: linear-gradient(#7bb3ff, #4a90e2); -fx-padding: 0 0 8 0; -fx-effect: dropshadow(gaussian, rgba(74, 144, 226, 0.5), 3, 0.5, 0, 0);"/>
+            <GridPane fx:id="keybindsTable" hgap="12" vgap="6" style="-fx-padding: 0;">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="70" prefWidth="70" maxWidth="70"/>
+                    <ColumnConstraints minWidth="110" prefWidth="110"/>
+                </columnConstraints>
+            </GridPane>
+        </VBox>
+    </Pane>
+
     <!-- Start Screen -->
-    <VBox fx:id="startScreen" alignment="CENTER" spacing="30" style="-fx-background-color: rgba(26, 26, 26, 0.95);">
+    <VBox fx:id="startScreen" alignment="CENTER" spacing="30">
         <Label text="TETRIS" style="-fx-font-size: 48px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 40 0;"/>
         <Button fx:id="playButton" text="Play" onAction="#startGame"
                 style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-pref-width: 200; -fx-pref-height: 50; -fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+        <Button fx:id="settingsStartButton" text="Settings" onAction="#openSettings"
+                style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-pref-width: 200; -fx-pref-height: 50; -fx-background-color: #2196F3; -fx-text-fill: white;"/>
         <Button fx:id="exitButton" text="Exit" onAction="#exitGame"
                 style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-pref-width: 200; -fx-pref-height: 50; -fx-background-color: #f44336; -fx-text-fill: white;"/>
     </VBox>

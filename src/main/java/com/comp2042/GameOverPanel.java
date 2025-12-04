@@ -11,7 +11,6 @@ public class GameOverPanel extends BorderPane {
 
     private Label gameOverLabel;
     private Button playAgainButton;
-    private Button mainMenuButton;
     private VBox contentBox;
 
     public GameOverPanel() {
@@ -24,19 +23,13 @@ public class GameOverPanel extends BorderPane {
         
         playAgainButton = new Button("Play Again");
         playAgainButton.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 150; -fx-pref-height: 40; -fx-background-color: #4CAF50; -fx-text-fill: white;");
+        VBox.setMargin(playAgainButton, new Insets(0, 0, 0, 30));
         
-        mainMenuButton = new Button("Main Menu");
-        mainMenuButton.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-pref-width: 150; -fx-pref-height: 40; -fx-background-color: #2196F3; -fx-text-fill: white;");
-        
-        contentBox.getChildren().addAll(gameOverLabel, playAgainButton, mainMenuButton);
+        contentBox.getChildren().addAll(gameOverLabel, playAgainButton);
         setCenter(contentBox);
     }
 
     public Button getPlayAgainButton() {
         return playAgainButton;
-    }
-
-    public Button getMainMenuButton() {
-        return mainMenuButton;
     }
 }

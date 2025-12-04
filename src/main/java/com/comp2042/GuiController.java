@@ -3,7 +3,6 @@ package com.comp2042;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.FadeTransition;
-import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -18,27 +17,33 @@ import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Popup;
 import javafx.stage.Window;
-import javafx.geometry.Pos;
 import java.util.Optional;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Paint;
+import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.scene.control.Label;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import java.net.URL;
 import java.util.List;
@@ -114,12 +119,24 @@ public class GuiController implements Initializable {
     private Button menuButton;
 
     private Popup menuPopup;
-    private Button resumeMenuButton;
+    private Button mainMenuButton;
     private Button settingsMenuButton;
     private Button exitMenuButton;
+    private boolean wasPausedBeforeMenu = false;
+    private boolean menuActionTaken = false;
+    private boolean wasPausedBeforeSettings = false;
 
     @FXML
     private Button restartButton;
+
+    @FXML
+    private Pane keybindsPane;
+
+    @FXML
+    private VBox keybindsContainer;
+
+    @FXML
+    private GridPane keybindsTable;
 
     private Rectangle[][] displayMatrix;
 
@@ -129,6 +146,8 @@ public class GuiController implements Initializable {
     private Rectangle[][] ghostRectangles;
     private Rectangle[][] nextBrickPreview;
     private Rectangle[][] holdBrickPreview;
+
+    private ImageView gameAreaBackgroundImageView;
 
     private Timeline timeLine;
 
@@ -143,15 +162,14 @@ public class GuiController implements Initializable {
     private int visibleRows;
 
     private double scaleFactor = 1.0;
-    private static final double BASE_GAME_WIDTH = 480; // Total width including right-side HUD
-    private static final double BASE_GAME_HEIGHT = 640; // Total height
+    private static final double BASE_GAME_WIDTH = 480;
+    private static final double BASE_GAME_HEIGHT = 640;
 
-    // Settings
     private SettingsManager settingsManager;
-    private static final double BASE_GAME_SPEED = 400.0; // milliseconds
+    private static final double BASE_GAME_SPEED = 400.0;
 
-    // High Score
     private HighScoreManager highScoreManager;
+    private MediaPlayer mediaPlayer;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -162,6 +180,11 @@ public class GuiController implements Initializable {
         initializeScoreDisplay();
         initializeBorders();
         initializeMenu();
+        initializeStartScreen();
+        initializeGameAreaBackground();
+        initializeKeybinds();
+        positionKeybinds();
+        initializeMusic();
         
         // Hide game initially, show start screen
         if (scalingContainer != null) {
@@ -169,6 +192,16 @@ public class GuiController implements Initializable {
         }
         if (startScreen != null) {
             startScreen.setVisible(true);
+        }
+        // Hide keybinds on start screen
+        if (keybindsContainer != null) {
+            keybindsContainer.setVisible(false);
+        }
+        
+        // Position keybinds when container size changes
+        if (gameContainer != null) {
+            gameContainer.widthProperty().addListener((obs, oldVal, newVal) -> positionKeybinds());
+            gameContainer.heightProperty().addListener((obs, oldVal, newVal) -> positionKeybinds());
         }
 
         // Add resize listener for responsive scaling
@@ -282,27 +315,289 @@ public class GuiController implements Initializable {
     }
 
     private void initializeBorders() {
-        // Add drop shadow effects to game border
+        // Enhanced game border with gradient and glow
         if (gameBorder != null) {
+            // Create gradient stroke for game border
+            LinearGradient gameGradient = new LinearGradient(
+                0, 0, 1, 1, true, null,
+                new Stop(0.0, Color.rgb(91, 160, 242)),
+                new Stop(0.3, Color.rgb(74, 144, 226)),
+                new Stop(0.7, Color.rgb(53, 122, 189)),
+                new Stop(1.0, Color.rgb(42, 95, 143))
+            );
+            gameBorder.setStroke(gameGradient);
+            gameBorder.setStrokeWidth(4);
+            
+            // Enhanced drop shadow with stronger glow
             DropShadow gameShadow = new DropShadow();
-            gameShadow.setColor(Color.rgb(74, 144, 226, 0.5));
-            gameShadow.setRadius(8);
+            gameShadow.setColor(Color.rgb(74, 144, 226, 0.6));
+            gameShadow.setRadius(10);
             gameShadow.setOffsetX(0);
             gameShadow.setOffsetY(0);
             gameBorder.setEffect(gameShadow);
         }
         
-        // Add drop shadow effects to HUD border
+        // Enhanced HUD border with gradient and glow
         if (hudBorder != null) {
+            // Create gradient stroke for HUD border - same as game border
+            LinearGradient hudGradient = new LinearGradient(
+                0, 0, 1, 1, true, null,
+                new Stop(0.0, Color.rgb(91, 160, 242)),
+                new Stop(0.3, Color.rgb(74, 144, 226)),
+                new Stop(0.7, Color.rgb(53, 122, 189)),
+                new Stop(1.0, Color.rgb(42, 95, 143))
+            );
+            hudBorder.setStroke(hudGradient);
+            hudBorder.setStrokeWidth(4);
+            
+            // Enhanced drop shadow with stronger glow - same as game border
             DropShadow hudShadow = new DropShadow();
-            hudShadow.setColor(Color.rgb(139, 127, 168, 0.4));
-            hudShadow.setRadius(6);
+            hudShadow.setColor(Color.rgb(74, 144, 226, 0.6));
+            hudShadow.setRadius(10);
             hudShadow.setOffsetX(0);
             hudShadow.setOffsetY(0);
             hudBorder.setEffect(hudShadow);
         }
+        
+        // Style outer glow borders if they exist
+        if (gameBorderOuter != null) {
+            LinearGradient outerGameGradient = new LinearGradient(
+                0, 0, 1, 1, true, null,
+                new Stop(0.0, Color.rgb(123, 179, 255)),
+                new Stop(0.5, Color.rgb(107, 163, 240)),
+                new Stop(1.0, Color.rgb(74, 144, 226))
+            );
+            gameBorderOuter.setStroke(outerGameGradient);
+            gameBorderOuter.setStrokeWidth(2);
+            
+            DropShadow outerGameShadow = new DropShadow();
+            outerGameShadow.setColor(Color.rgb(107, 163, 240, 0.4));
+            outerGameShadow.setRadius(6);
+            outerGameShadow.setOffsetX(0);
+            outerGameShadow.setOffsetY(0);
+            gameBorderOuter.setEffect(outerGameShadow);
+        }
+        
+        if (hudBorderOuter != null) {
+            LinearGradient outerHudGradient = new LinearGradient(
+                0, 0, 1, 1, true, null,
+                new Stop(0.0, Color.rgb(123, 179, 255)),
+                new Stop(0.5, Color.rgb(107, 163, 240)),
+                new Stop(1.0, Color.rgb(74, 144, 226))
+            );
+            hudBorderOuter.setStroke(outerHudGradient);
+            hudBorderOuter.setStrokeWidth(2);
+            
+            DropShadow outerHudShadow = new DropShadow();
+            outerHudShadow.setColor(Color.rgb(107, 163, 240, 0.4));
+            outerHudShadow.setRadius(6);
+            outerHudShadow.setOffsetX(0);
+            outerHudShadow.setOffsetY(0);
+            hudBorderOuter.setEffect(outerHudShadow);
+        }
     }
 
+    private void initializeStartScreen() {
+        if (startScreen != null) {
+            try {
+                // Load the background image
+                URL imageUrl = getClass().getClassLoader().getResource("Pixel Fields.png");
+                
+                
+                if (imageUrl == null) {
+                    System.err.println("Failed to find 'Pixel Fields.png' in resources");
+                    return;
+                }
+                
+                // Load the background image
+                Image backgroundImage = new Image(imageUrl.toExternalForm());
+                
+                // Wait for image to load
+                if (backgroundImage.isError()) {
+                    System.err.println("Error loading image: " + backgroundImage.getException().getMessage());
+                    return;
+                }
+                
+                // Create background image with proper sizing to cover the entire area
+                BackgroundSize backgroundSize = new BackgroundSize(
+                    BackgroundSize.AUTO, BackgroundSize.AUTO,
+                    false, false, false, true  // cover = true to fill entire area
+                );
+                
+                BackgroundImage bgImage = new BackgroundImage(
+                    backgroundImage,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT,
+                    BackgroundPosition.CENTER,
+                    backgroundSize
+                );
+                
+                // Set the background
+                startScreen.setBackground(new Background(bgImage));
+            } catch (Exception e) {
+                // If image loading fails, keep the default background color
+                System.err.println("Failed to load start screen background image: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void initializeGameAreaBackground() {
+        if (scalingContainer != null) {
+            try {
+                URL imageUrl = getClass().getClassLoader().getResource("Pixel Field Play.png");
+                
+                if (imageUrl == null) {
+                    System.err.println("Failed to find 'Pixel Field Play.png' in resources");
+                    return;
+                }
+                
+                Image backgroundImage = new Image(imageUrl.toExternalForm());
+                
+                if (backgroundImage.isError()) {
+                    System.err.println("Error loading game area image: " + backgroundImage.getException().getMessage());
+                    return;
+                }
+                
+                // Use ImageView for precise control over positioning and sizing
+                gameAreaBackgroundImageView = new ImageView(backgroundImage);
+                // Make it bigger
+                double scaleX = 5.0; // Width multiplier
+                double scaleY = 2.5; // Height multiplier
+                gameAreaBackgroundImageView.setFitWidth(BASE_GAME_WIDTH * scaleX);
+                gameAreaBackgroundImageView.setFitHeight(BASE_GAME_HEIGHT * scaleY);
+                gameAreaBackgroundImageView.setPreserveRatio(false); // Stretch to fill exactly
+                // Center it by offsetting by half the difference
+                gameAreaBackgroundImageView.setLayoutX(-BASE_GAME_WIDTH * (scaleX - 1) / 2); // Center horizontally
+                gameAreaBackgroundImageView.setLayoutY(-BASE_GAME_HEIGHT * (scaleY - 1) / 2); // Center vertically
+                gameAreaBackgroundImageView.setSmooth(true);
+                
+                // Insert at position 0 so it's behind all other content
+                scalingContainer.getChildren().add(0, gameAreaBackgroundImageView);
+            } catch (Exception e) {
+                System.err.println("Failed to load game area background image: " + e.getMessage());
+            }
+        }
+    }
+
+    private void initializeKeybinds() {
+        if (keybindsTable == null) {
+            return;
+        }
+        
+        // Define keybinds
+        String[][] keybinds = {
+            {"← / A", "Move Left"},
+            {"→ / D", "Move Right"},
+            {"↑ / W", "Rotate"},
+            {"↓ / S", "Move Down"},
+            {"SPACE", "Hard Drop"},
+            {"C / SHIFT", "Hold"},
+            {"N", "New Game"}
+        };
+        
+        int row = 0;
+        for (String[] keybind : keybinds) {
+            Label keyLabel = new Label(keybind[0]);
+            keyLabel.setStyle(
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: bold; " +
+                "-fx-text-fill: #FFD700; " +
+                "-fx-background-color: rgba(255, 215, 0, 0.15); " +
+                "-fx-background-radius: 4px; " +
+                "-fx-border-color: #FFD700; " +
+                "-fx-border-width: 1px; " +
+                "-fx-border-radius: 4px; " +
+                "-fx-padding: 4px 8px; " +
+                "-fx-alignment: center;"
+            );
+            keyLabel.setPrefWidth(70);
+            keyLabel.setMinWidth(70);
+            keyLabel.setMaxWidth(70);
+            
+            Label actionLabel = new Label(keybind[1]);
+            actionLabel.setStyle(
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: normal; " +
+                "-fx-text-fill: #e0e0e0; " +
+                "-fx-padding: 4px 0;"
+            );
+            
+            keybindsTable.add(keyLabel, 0, row);
+            keybindsTable.add(actionLabel, 1, row);
+            row++;
+        }
+    }
+
+    private void positionKeybinds() {
+        if (keybindsPane == null || gameContainer == null) {
+            return;
+        }
+        
+        // Position keybinds pane at top left of the game container
+        keybindsPane.setLayoutX(30);
+        keybindsPane.setLayoutY(50);
+        
+        // Ensure the VBox inside is positioned at (0, 0) relative to the Pane
+        if (keybindsContainer != null) {
+            keybindsContainer.setLayoutX(0);
+            keybindsContainer.setLayoutY(0);
+        }
+    }
+    
+    private void initializeMusic() {
+        try {
+            URL musicUrl = getClass().getClassLoader().getResource("Music.mp3");
+            if (musicUrl == null) {
+                System.err.println("Failed to find 'Music.mp3' in resources");
+                return;
+            }
+            
+            Media media = new Media(musicUrl.toExternalForm());
+            mediaPlayer = new MediaPlayer(media);
+            
+            // Set to loop indefinitely
+            mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            
+            // Set initial volume from settings
+            if (settingsManager != null) {
+                mediaPlayer.setVolume(settingsManager.getMusicVolume());
+                
+                // Play if music is enabled
+                if (settingsManager.isMusicEnabled()) {
+                    mediaPlayer.play();
+                }
+            } else {
+                // Default volume if settings not loaded yet
+                mediaPlayer.setVolume(0.7);
+                mediaPlayer.play();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to initialize music: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void updateMusicSettings() {
+        if (mediaPlayer == null || settingsManager == null) {
+            return;
+        }
+        
+        // Update volume
+        mediaPlayer.setVolume(settingsManager.getMusicVolume());
+        
+        // Play or stop based on enabled setting
+        if (settingsManager.isMusicEnabled()) {
+            if (mediaPlayer.getStatus() != MediaPlayer.Status.PLAYING) {
+                mediaPlayer.play();
+            }
+        } else {
+            if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                mediaPlayer.pause();
+            }
+        }
+    }
+    
     private void initializeMenu() {
         // Create popup menu
         menuPopup = new Popup();
@@ -313,24 +608,47 @@ public class GuiController implements Initializable {
         menuContainer.setStyle("-fx-background-color: #2a2a2a; -fx-border-color: #4a4a4a; -fx-border-width: 1px; -fx-padding: 4px;");
         
         // Create menu buttons
-        resumeMenuButton = new Button("Pause");
-        resumeMenuButton.setPrefWidth(100);
-        resumeMenuButton.setPrefHeight(30);
-        resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
-        resumeMenuButton.setOnAction(e -> {
+        mainMenuButton = new Button("Main Menu");
+        mainMenuButton.setPrefWidth(100);
+        mainMenuButton.setPrefHeight(30);
+        mainMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
+        mainMenuButton.setOnAction(e -> {
+            menuActionTaken = true; // Prevent auto-resume when going to main menu
             menuPopup.hide();
-            resumeGame(e);
+            
+            // Stop timeline when returning to main menu
+            if (timeLine != null) {
+                timeLine.stop();
+            }
+            
+            // Hide game, show start screen
+            if (scalingContainer != null) {
+                scalingContainer.setVisible(false);
+            }
+            if (startScreen != null) {
+                startScreen.setVisible(true);
+            }
+            if (gameOverPanel != null) {
+                gameOverPanel.setVisible(false);
+            }
+            // Hide keybinds when returning to main menu
+            if (keybindsContainer != null) {
+                keybindsContainer.setVisible(false);
+            }
         });
-        resumeMenuButton.setOnMouseEntered(e -> resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
-        resumeMenuButton.setOnMouseExited(e -> resumeMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
+        mainMenuButton.setOnMouseEntered(e -> mainMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
+        mainMenuButton.setOnMouseExited(e -> mainMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
         
         settingsMenuButton = new Button("Settings");
         settingsMenuButton.setPrefWidth(100);
         settingsMenuButton.setPrefHeight(30);
         settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
         settingsMenuButton.setOnAction(e -> {
+            menuActionTaken = true; // Prevent auto-resume when settings opens
+            boolean menuAutoPaused = !wasPausedBeforeMenu; // Remember if menu auto-paused
             menuPopup.hide();
-            openSettings(e);
+            // Pass whether menu auto-paused to settings
+            openSettings(e, menuAutoPaused);
         });
         settingsMenuButton.setOnMouseEntered(e -> settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
         settingsMenuButton.setOnMouseExited(e -> settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
@@ -340,21 +658,48 @@ public class GuiController implements Initializable {
         exitMenuButton.setPrefHeight(30);
         exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
         exitMenuButton.setOnAction(e -> {
+            menuActionTaken = true; // Prevent auto-resume when exiting
             menuPopup.hide();
             exitGame(e);
         });
         exitMenuButton.setOnMouseEntered(e -> exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
         exitMenuButton.setOnMouseExited(e -> exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;"));
         
-        menuContainer.getChildren().addAll(resumeMenuButton, settingsMenuButton, exitMenuButton);
+        menuContainer.getChildren().addAll(mainMenuButton, settingsMenuButton, exitMenuButton);
         menuPopup.getContent().add(menuContainer);
         
-        updateResumeMenuItemText();
+        // Add listener to auto-resume when menu closes
+        menuPopup.setOnHidden(e -> {
+            // Only resume if we auto-paused (not paused before) and no menu action was taken
+            if (!menuActionTaken && wasPausedBeforeMenu == false && isPause.getValue() == Boolean.TRUE) {
+                // We auto-paused, so auto-resume (user clicked outside menu)
+                isPause.setValue(Boolean.FALSE);
+                if (timeLine != null && isGameOver.getValue() == Boolean.FALSE) {
+                    timeLine.play();
+                }
+            }
+            // Reset flags
+            wasPausedBeforeMenu = false;
+            menuActionTaken = false;
+        });
     }
 
     @FXML
     public void showMenu(ActionEvent actionEvent) {
         if (menuButton != null && menuPopup != null) {
+            // Auto-pause when menu opens (if game is not already paused and game is not over)
+            menuActionTaken = false; // Reset flag when opening menu
+            if (isGameOver.getValue() == Boolean.FALSE) {
+                wasPausedBeforeMenu = isPause.getValue(); // Remember if it was already paused
+                if (!isPause.getValue()) {
+                    // Auto-pause the game
+                    isPause.setValue(Boolean.TRUE);
+                    if (timeLine != null) {
+                        timeLine.pause();
+                    }
+                }
+            }
+            
             // Calculate position below the button
             Window window = menuButton.getScene().getWindow();
             
@@ -468,7 +813,6 @@ public class GuiController implements Initializable {
         }
         return returnPaint;
     }
-
 
     private void refreshBrick(ViewData brick) {
         if (isPause.getValue() == Boolean.FALSE) {
@@ -654,7 +998,6 @@ public class GuiController implements Initializable {
             }
         }
         
-        // After animation completes refresh the background to show cleared state
         parallel.setOnFinished(e -> {
             Platform.runLater(() -> {
                 if (eventListener != null) {
@@ -668,11 +1011,9 @@ public class GuiController implements Initializable {
 
     private void updateLevelAndLines(int linesRemoved) {
         if (linesRemoved > 0) {
-            // Update lines cleared
             int newLinesTotal = linesCleared.get() + linesRemoved;
             linesCleared.setValue(newLinesTotal);
             
-            // Update label directly
             if (linesLabel != null) {
                 linesLabel.setText("Lines: " + newLinesTotal);
             }
@@ -758,10 +1099,6 @@ public class GuiController implements Initializable {
             // Force re-layout to center the game
             gameContainer.requestLayout();
 
-            // Re-center the game elements if needed
-            if (gamePanel != null && brickPanel != null) {
-                System.out.println("Fullscreen changed - recentering game");
-            }
         }
     }
 
@@ -782,19 +1119,9 @@ public class GuiController implements Initializable {
             checkAndUpdateHighScore(currentScore.get());
         }
         
-        // Set up button actions
+        // Set up Play Again button action
         if (gameOverPanel != null) {
             gameOverPanel.getPlayAgainButton().setOnAction(e -> newGame(e));
-            gameOverPanel.getMainMenuButton().setOnAction(e -> {
-                // Hide game, show start screen
-                if (scalingContainer != null) {
-                    scalingContainer.setVisible(false);
-                }
-                if (startScreen != null) {
-                    startScreen.setVisible(true);
-                }
-                gameOverPanel.setVisible(false);
-            });
         }
         
         gameOverPanel.setVisible(true);
@@ -821,9 +1148,6 @@ public class GuiController implements Initializable {
 
         isPause.setValue(Boolean.FALSE);
         isGameOver.setValue(Boolean.FALSE);
-        
-        // Reset menu button state
-        updateResumeMenuItemText();
     }
 
     @FXML
@@ -846,29 +1170,27 @@ public class GuiController implements Initializable {
                 timeLine.play();
             }
         }
-        updateResumeMenuItemText();
         gamePanel.requestFocus();
-    }
-
-    private void updateResumeMenuItemText() {
-        if (resumeMenuButton != null) {
-            if (isPause.getValue()) {
-                resumeMenuButton.setText("Resume");
-            } else {
-                resumeMenuButton.setText("Pause");
-            }
-        }
     }
 
     @FXML
     public void openSettings(ActionEvent actionEvent) {
-        // Pause the game when opening settings
+        openSettings(actionEvent, false);
+    }
+    
+    private void openSettings(ActionEvent actionEvent, boolean menuAutoPaused) {
+        // Remember if game was paused before opening settings
+        wasPausedBeforeSettings = isPause.getValue();
+        
+        // If menu auto-paused, we should resume after settings closes
+        boolean shouldResumeAfterSettings = menuAutoPaused || (!wasPausedBeforeSettings);
+        
+        // Pause the game when opening settings (if not already paused)
         if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
             if (timeLine != null) {
                 timeLine.pause();
             }
             isPause.setValue(Boolean.TRUE);
-            updateResumeMenuItemText();
         }
         
         // Create and show settings dialog
@@ -886,26 +1208,64 @@ public class GuiController implements Initializable {
             settingsDialog.setMusicVolume(settingsManager.getMusicVolume());
         }
         
-        // Show dialog and wait for result
+        settingsDialog.setVolumeChangeListener(volume -> {
+            if (mediaPlayer != null) {
+                mediaPlayer.setVolume(volume);
+            }
+            if (settingsManager != null) {
+                settingsManager.setMusicVolume(volume);
+            }
+        });
+        
+        settingsDialog.setMusicEnabledChangeListener(enabled -> {
+            if (mediaPlayer != null) {
+                if (enabled) {
+                    if (mediaPlayer.getStatus() != MediaPlayer.Status.PLAYING) {
+                        mediaPlayer.play();
+                    }
+                } else {
+                    if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                        mediaPlayer.pause();
+                    }
+                }
+            }
+            if (settingsManager != null) {
+                settingsManager.setMusicEnabled(enabled);
+            }
+        });
+        
+        settingsDialog.setGhostPieceChangeListener(enabled -> {
+            if (settingsManager != null) {
+                settingsManager.setGhostPieceEnabled(enabled);
+            }
+            if (ghostPanel != null) {
+                ghostPanel.setVisible(enabled);
+            }
+        });
+        
         Optional<ButtonType> result = settingsDialog.showAndWait();
         
-        if (result.isPresent() && result.get() == ButtonType.OK && settingsManager != null) {
-            // Apply and save settings
-            settingsManager.setGhostPieceEnabled(settingsDialog.isGhostPieceEnabled());
-            settingsManager.setMusicEnabled(settingsDialog.isMusicEnabled());
-            settingsManager.setMusicVolume(settingsDialog.getMusicVolume());
-            
-            // Apply ghost visibility immediately
-            if (ghostPanel != null) {
-                ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (settingsManager != null) {
+                if (ghostPanel != null) {
+                    ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
+                }
+                updateMusicSettings();
             }
-            
-            //  Will apply music setting when music feature is implemented
-            //  Will apply music volume when music feature is implemented
- 
         }
         
-        gamePanel.requestFocus();
+        // Auto-resume if we should (either menu auto-paused or we auto-paused in settings)
+        if (shouldResumeAfterSettings && isPause.getValue() == Boolean.TRUE && isGameOver.getValue() == Boolean.FALSE) {
+            isPause.setValue(Boolean.FALSE);
+            if (timeLine != null) {
+                timeLine.play();
+            }
+        }
+        
+        // Request focus back to game panel if game is running, otherwise focus stays on start screen
+        if (gamePanel != null && scalingContainer != null && scalingContainer.isVisible()) {
+            gamePanel.requestFocus();
+        }
     }
 
     private void updateBrickPosition(ViewData brick) {
@@ -970,10 +1330,48 @@ public class GuiController implements Initializable {
         if (scalingContainer != null) {
             scalingContainer.setVisible(true);
         }
+        
+        // Show keybinds when game starts
+        if (keybindsContainer != null) {
+            keybindsContainer.setVisible(true);
+        }
+        // Reposition keybinds to ensure they're in the right place
+        positionKeybinds();
+        
+        // Stop any existing timeline
+        if (timeLine != null) {
+            timeLine.stop();
+        }
+        
+        // Hide game over panel if visible
+        if (gameOverPanel != null) {
+            gameOverPanel.setVisible(false);
+        }
+        
+        // Reset game state
+        isPause.setValue(Boolean.FALSE);
+        isGameOver.setValue(Boolean.FALSE);
+        
         if (eventListener == null) {
             // Initialize game if not already initialized
             new GameController(this);
+        } else {
+            // Game already exists, restart it
+            eventListener.createNewGame();
+            
+            // Reset game statistics
+            currentLevel.set(1);
+            linesCleared.set(0);
+            
+            // Restart timeline
+            timeLine = new Timeline(new KeyFrame(
+                    Duration.millis(BASE_GAME_SPEED),
+                    ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
+            ));
+            timeLine.setCycleCount(Timeline.INDEFINITE);
+            timeLine.play();
         }
+        
         gamePanel.requestFocus();
     }
 

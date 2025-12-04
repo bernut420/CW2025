@@ -1,8 +1,9 @@
 package com.comp2042;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
 import javafx.stage.Modality;
 
 
@@ -12,58 +13,184 @@ public class SettingsDialog extends Dialog<ButtonType> {
     private Slider volumeSlider;
     private Label volumeLabel;
     
+    private java.util.function.Consumer<Double> volumeChangeListener;
+    private java.util.function.Consumer<Boolean> musicEnabledChangeListener;
+    private java.util.function.Consumer<Boolean> ghostPieceChangeListener;
+    
     public SettingsDialog() {
         setTitle("Settings");
-        setHeaderText("Game Settings");
+        setHeaderText(null);
         
-        // Set the button types
         ButtonType okButtonType = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         getDialogPane().getButtonTypes().addAll(okButtonType, cancelButtonType);
         
-        // Create the content
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 20, 10, 20));
+        getDialogPane().setStyle(
+            "-fx-background-color: #1a1a1a; " +
+            "-fx-border-color: linear-gradient(#5ba0f2, #4a90e2); " +
+            "-fx-border-width: 2px;"
+        );
         
-        // Ghost piece setting
-        ghostPieceCheckBox = new CheckBox("Show Ghost Piece");
-        grid.add(new Label("Ghost Piece:"), 0, 0);
-        grid.add(ghostPieceCheckBox, 1, 0);
+        // Create main container with dark background
+        VBox mainContainer = new VBox(25);
+        mainContainer.setPadding(new Insets(30, 40, 20, 40));
+        mainContainer.setAlignment(Pos.CENTER);
+        mainContainer.setStyle("-fx-background-color: #1a1a1a;");
         
-        // Music setting
+        Label titleLabel = new Label("SETTINGS");
+        titleLabel.setStyle(
+            "-fx-font-size: 28px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-text-fill: linear-gradient(#7bb3ff, #4a90e2); " +
+            "-fx-effect: dropshadow(gaussian, rgba(74, 144, 226, 0.6), 8, 0.6, 0, 0);"
+        );
+        titleLabel.setPadding(new Insets(0, 0, 10, 0));
+        
+        VBox settingsContainer = new VBox(0);
+        settingsContainer.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox ghostSection = createSettingSection("Ghost Piece", "Show the ghost piece preview");
+        ghostPieceCheckBox = new CheckBox("Enable Ghost Piece");
+        ghostPieceCheckBox.setStyle(
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold;"
+        );
+        ghostSection.getChildren().add(ghostPieceCheckBox);
+        
+        ghostPieceCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (ghostPieceChangeListener != null && oldVal != null) {
+                ghostPieceChangeListener.accept(newVal);
+            }
+        });
+        
+        VBox musicSection = createSettingSection("Music", "Enable or disable background music");
         musicCheckBox = new CheckBox("Enable Music");
-        grid.add(new Label("Music:"), 0, 1);
-        grid.add(musicCheckBox, 1, 1);
+        musicCheckBox.setStyle(
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold;"
+        );
+        musicSection.getChildren().add(musicCheckBox);
         
-        // Volume setting
+        VBox volumeSection = createSettingSection("Volume", "Adjust music volume");
+        HBox volumeControls = new HBox(15);
+        volumeControls.setAlignment(Pos.CENTER_LEFT);
+        
         volumeSlider = new Slider(0, 1, 0.7);
-        volumeSlider.setShowTickLabels(true);
-        volumeSlider.setShowTickMarks(true);
-        volumeSlider.setMajorTickUnit(0.25);
-        volumeSlider.setBlockIncrement(0.1);
+        volumeSlider.setPrefWidth(200);
+        volumeSlider.setShowTickLabels(false);
+        volumeSlider.setShowTickMarks(false);
+        volumeSlider.setStyle(
+            "-fx-control-inner-background: #2a2a2a; " +
+            "-fx-background-color: #1a1a1a;"
+        );
+        
         volumeLabel = new Label("70%");
+        volumeLabel.setStyle(
+            "-fx-text-fill: #FFD700; " +
+            "-fx-font-size: 16px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-min-width: 50px;"
+        );
         
-        grid.add(new Label("Volume:"), 0, 2);
-        grid.add(volumeSlider, 1, 2);
-        grid.add(volumeLabel, 2, 2);
+        volumeControls.getChildren().addAll(volumeSlider, volumeLabel);
+        volumeSection.getChildren().add(volumeControls);
         
-        // Update volume label when slider changes
+        settingsContainer.getChildren().add(ghostSection);
+        settingsContainer.getChildren().add(createSeparator());
+        settingsContainer.getChildren().add(musicSection);
+        settingsContainer.getChildren().add(createSeparator());
+        settingsContainer.getChildren().add(volumeSection);
+        
+        mainContainer.getChildren().addAll(titleLabel, settingsContainer);
+        
         volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             int percent = (int) (newVal.doubleValue() * 100);
             volumeLabel.setText(percent + "%");
+            
+            if (volumeChangeListener != null && oldVal != null) {
+                volumeChangeListener.accept(newVal.doubleValue());
+            }
         });
         
-        // Enable/disable volume slider based on music checkbox
         musicCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
             volumeSlider.setDisable(!newVal);
+            if (!newVal) {
+                volumeSlider.setStyle(
+                    "-fx-control-inner-background: #1a1a1a; " +
+                    "-fx-background-color: #1a1a1a; " +
+                    "-fx-opacity: 0.5;"
+                );
+            } else {
+                volumeSlider.setStyle(
+                    "-fx-control-inner-background: #2a2a2a; " +
+                    "-fx-background-color: #1a1a1a; " +
+                    "-fx-opacity: 1.0;"
+                );
+            }
+            
+            if (musicEnabledChangeListener != null) {
+                musicEnabledChangeListener.accept(newVal);
+            }
         });
         
-        getDialogPane().setContent(grid);
+        getDialogPane().setContent(mainContainer);
         
-        // Set modality
+        getDialogPane().lookupButton(okButtonType).setStyle(
+            "-fx-background-color: linear-gradient(#4CAF50, #45a049); " +
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-pref-width: 80px; " +
+            "-fx-pref-height: 30px; " +
+            "-fx-background-radius: 5px;"
+        );
+        
+        getDialogPane().lookupButton(cancelButtonType).setStyle(
+            "-fx-background-color: linear-gradient(#f44336, #da190b); " +
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-pref-width: 80px; " +
+            "-fx-pref-height: 30px; " +
+            "-fx-background-radius: 5px;"
+        );
+        
         initModality(Modality.APPLICATION_MODAL);
+    }
+    
+    private VBox createSettingSection(String title, String description) {
+        VBox section = new VBox(8);
+        section.setPadding(new Insets(10, 0, 10, 0));
+        
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle(
+            "-fx-font-size: 16px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-text-fill: #7bb3ff;"
+        );
+        
+        Label descLabel = new Label(description);
+        descLabel.setStyle(
+            "-fx-font-size: 11px; " +
+            "-fx-text-fill: #aaaaaa;"
+        );
+        
+        section.getChildren().addAll(titleLabel, descLabel);
+        return section;
+    }
+    
+    private Region createSeparator() {
+        Region separator = new Region();
+        separator.setPrefHeight(1);
+        separator.setMinHeight(1);
+        separator.setMaxHeight(1);
+        separator.setStyle(
+            "-fx-background-color: linear-gradient(to right, transparent, rgba(74, 144, 226, 0.5), transparent); " +
+            "-fx-padding: 15px 0 15px 0;"
+        );
+        return separator;
     }
     
     public boolean isGhostPieceEnabled() {
@@ -88,9 +215,27 @@ public class SettingsDialog extends Dialog<ButtonType> {
     }
     
     public void setMusicVolume(double volume) {
-        volumeSlider.setValue(Math.max(0.0, Math.min(1.0, volume)));
-        int percent = (int) (volume * 100);
+        double clampedVolume = Math.max(0.0, Math.min(1.0, volume));
+        java.util.function.Consumer<Double> tempListener = volumeChangeListener;
+        volumeChangeListener = null;
+        volumeSlider.setValue(clampedVolume);
+        int percent = (int) (clampedVolume * 100);
         volumeLabel.setText(percent + "%");
+        volumeChangeListener = tempListener;
+    }
+    
+
+    public void setVolumeChangeListener(java.util.function.Consumer<Double> listener) {
+        this.volumeChangeListener = listener;
+    }
+    
+
+    public void setMusicEnabledChangeListener(java.util.function.Consumer<Boolean> listener) {
+        this.musicEnabledChangeListener = listener;
+    }
+    
+    public void setGhostPieceChangeListener(java.util.function.Consumer<Boolean> listener) {
+        this.ghostPieceChangeListener = listener;
     }
 }
 
