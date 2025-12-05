@@ -12,10 +12,12 @@ public class SettingsDialog extends Dialog<ButtonType> {
     private CheckBox musicCheckBox;
     private Slider volumeSlider;
     private Label volumeLabel;
+    private CheckBox backgroundPictureCheckBox;
     
     private java.util.function.Consumer<Double> volumeChangeListener;
     private java.util.function.Consumer<Boolean> musicEnabledChangeListener;
     private java.util.function.Consumer<Boolean> ghostPieceChangeListener;
+    private java.util.function.Consumer<Boolean> backgroundPictureChangeListener;
     
     public SettingsDialog() {
         setTitle("Settings");
@@ -31,7 +33,6 @@ public class SettingsDialog extends Dialog<ButtonType> {
             "-fx-border-width: 2px;"
         );
         
-        // Create main container with dark background
         VBox mainContainer = new VBox(25);
         mainContainer.setPadding(new Insets(30, 40, 20, 40));
         mainContainer.setAlignment(Pos.CENTER);
@@ -97,7 +98,24 @@ public class SettingsDialog extends Dialog<ButtonType> {
         volumeControls.getChildren().addAll(volumeSlider, volumeLabel);
         volumeSection.getChildren().add(volumeControls);
         
+        VBox backgroundSection = createSettingSection("Background Picture", "Show or hide the background picture in play area");
+        backgroundPictureCheckBox = new CheckBox("Enable Background Picture");
+        backgroundPictureCheckBox.setStyle(
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold;"
+        );
+        backgroundSection.getChildren().add(backgroundPictureCheckBox);
+        
+        backgroundPictureCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (backgroundPictureChangeListener != null && oldVal != null) {
+                backgroundPictureChangeListener.accept(newVal);
+            }
+        });
+        
         settingsContainer.getChildren().add(ghostSection);
+        settingsContainer.getChildren().add(createSeparator());
+        settingsContainer.getChildren().add(backgroundSection);
         settingsContainer.getChildren().add(createSeparator());
         settingsContainer.getChildren().add(musicSection);
         settingsContainer.getChildren().add(createSeparator());
@@ -236,6 +254,18 @@ public class SettingsDialog extends Dialog<ButtonType> {
     
     public void setGhostPieceChangeListener(java.util.function.Consumer<Boolean> listener) {
         this.ghostPieceChangeListener = listener;
+    }
+    
+    public boolean isBackgroundPictureEnabled() {
+        return backgroundPictureCheckBox.isSelected();
+    }
+    
+    public void setBackgroundPictureEnabled(boolean enabled) {
+        backgroundPictureCheckBox.setSelected(enabled);
+    }
+    
+    public void setBackgroundPictureChangeListener(java.util.function.Consumer<Boolean> listener) {
+        this.backgroundPictureChangeListener = listener;
     }
 }
 

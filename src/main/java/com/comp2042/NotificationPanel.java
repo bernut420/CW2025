@@ -14,7 +14,6 @@ import javafx.util.Duration;
 public class NotificationPanel extends BorderPane {
 
     public NotificationPanel(String text) {
-        // Set initial position and size
         setLayoutX(0);
         setLayoutY(0);
         setPrefWidth(220);
@@ -24,7 +23,6 @@ public class NotificationPanel extends BorderPane {
         setMaxWidth(220);
         setMaxHeight(60);
         
-        // Create and style the label
         final Label score = new Label(text);
         score.getStyleClass().add("bonusStyle");
         final Glow glow = new Glow(0.8);
@@ -33,16 +31,13 @@ public class NotificationPanel extends BorderPane {
         score.setStyle("-fx-alignment: center;");
         setCenter(score);
         
-        // Make sure the panel is visible
         setOpacity(1.0);
     }
 
     public void showScore(ObservableList<Node> list) {
-        // Animate upward and fade out
         FadeTransition ft = new FadeTransition(Duration.millis(2000), this);
         TranslateTransition tt = new TranslateTransition(Duration.millis(2000), this);
         
-        // Start from current position (0, 0) and move up 60 pixels
         tt.setFromY(0);
         tt.setToY(-60);
         

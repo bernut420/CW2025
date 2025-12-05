@@ -16,19 +16,16 @@ public class Main extends Application {
         GuiController c = fxmlLoader.getController();
 
         primaryStage.setTitle("TetrisJFX");
-        Scene scene = new Scene(root, 400, 600); // Slightly larger initial size
+        Scene scene = new Scene(root, 400, 600);
 
-        // Enable fullscreen support
         primaryStage.setMinWidth(300);
         primaryStage.setMinHeight(500);
 
         primaryStage.setScene(scene);
         primaryStage.setFullScreen(true);
-        primaryStage.setFullScreenExitHint(""); // Remove the "Press ESC to exit full screen" prompt
+        primaryStage.setFullScreenExitHint("");
         primaryStage.show();
         
-        // Center the game after the window is shown and fullscreen is activated
-        // Use multiple delayed calls to ensure dimensions are available
         Platform.runLater(() -> {
             Platform.runLater(() -> {
                 if (primaryStage.isFullScreen()) {
@@ -37,22 +34,18 @@ public class Main extends Application {
             });
         });
         
-        // Listen for fullscreen changes to re-center
         primaryStage.fullScreenProperty().addListener((obs, wasFullscreen, isNowFullscreen) -> {
             Platform.runLater(() -> {
                 Platform.runLater(() -> c.updateGameScale());
             });
         });
         
-        // Also listen for scene size changes
         scene.widthProperty().addListener((obs, oldVal, newVal) -> {
             Platform.runLater(() -> c.updateGameScale());
         });
         scene.heightProperty().addListener((obs, oldVal, newVal) -> {
             Platform.runLater(() -> c.updateGameScale());
         });
-        
-        // GameController will be initialized when user clicks "Play" button
     }
 
     public static void main(String[] args) {

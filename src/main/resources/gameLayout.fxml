@@ -41,7 +41,7 @@
         <!-- Main playfield border - main -->
         <Rectangle fx:id="gameBorder"
                    layoutX="30" layoutY="60"
-                   width="220" height="520"
+                   width="264" height="602"
                    fill="transparent"
                    arcWidth="8"
                    arcHeight="8"/>

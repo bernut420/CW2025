@@ -90,7 +90,6 @@ public class SimpleBoard implements Board {
     public boolean createNewBrick() {
         Brick currentBrick = brickGenerator.getBrick();
         brickRotator.setBrick(currentBrick);
-        // Spawn bricks just above the visible playfield so players can stack up to 20 blocks high
         currentOffset = new Point(4, HIDDEN_ROWS);
         holdUsedThisTurn = false;
         return MatrixOperations.intersect(currentGameMatrix, brickRotator.getCurrentShape(), (int) currentOffset.getX(), (int) currentOffset.getY());
@@ -115,7 +114,6 @@ public class SimpleBoard implements Board {
         int currentX = (int) currentOffset.getX();
         int currentY = (int) currentOffset.getY();
         
-        // Start from current position and move down until collision
         int ghostY = currentY;
         while (true) {
             int testY = ghostY + 1;
@@ -144,7 +142,6 @@ public class SimpleBoard implements Board {
     public Score getScore() {
         return score;
     }
-
 
     @Override
     public void newGame() {

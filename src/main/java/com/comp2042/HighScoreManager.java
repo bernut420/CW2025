@@ -20,7 +20,6 @@ public class HighScoreManager {
                 highScore = 0;
             }
         } catch (IOException | NumberFormatException e) {
-            // Use default if file doesn't exist or is invalid
             highScore = 0;
         }
     }

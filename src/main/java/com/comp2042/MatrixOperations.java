@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MatrixOperations {
-
-
-    //We don't want to instantiate this utility class
-    private MatrixOperations(){
-
+    private MatrixOperations() {
     }
 
     public static boolean intersect(final int[][] matrix, final int[][] brick, int x, int y) {
@@ -28,11 +24,7 @@ public class MatrixOperations {
     }
 
     private static boolean checkOutOfBound(int[][] matrix, int targetX, int targetY) {
-        boolean returnValue = true;
-        if (targetX >= 0 && targetY < matrix.length && targetX < matrix[targetY].length) {
-            returnValue = false;
-        }
-        return returnValue;
+        return !(targetX >= 0 && targetY < matrix.length && targetX < matrix[targetY].length);
     }
 
     public static int[][] copy(int[][] original) {

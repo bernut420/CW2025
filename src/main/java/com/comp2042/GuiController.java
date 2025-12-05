@@ -13,7 +13,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Reflection;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.control.Button;
@@ -186,30 +185,26 @@ public class GuiController implements Initializable {
         positionKeybinds();
         initializeMusic();
         
-        // Hide game initially, show start screen
         if (scalingContainer != null) {
             scalingContainer.setVisible(false);
         }
         if (startScreen != null) {
             startScreen.setVisible(true);
         }
-        // Hide keybinds on start screen
         if (keybindsContainer != null) {
             keybindsContainer.setVisible(false);
         }
         
-        // Position keybinds when container size changes
         if (gameContainer != null) {
-            gameContainer.widthProperty().addListener((obs, oldVal, newVal) -> positionKeybinds());
-            gameContainer.heightProperty().addListener((obs, oldVal, newVal) -> positionKeybinds());
+            gameContainer.widthProperty().addListener((obs, oldVal, newVal) -> {
+                positionKeybinds();
+                updateGameScale();
+            });
+            gameContainer.heightProperty().addListener((obs, oldVal, newVal) -> {
+                positionKeybinds();
+                updateGameScale();
+            });
         }
-
-        // Add resize listener for responsive scaling
-        if (gameContainer != null) {
-            gameContainer.widthProperty().addListener((obs, oldVal, newVal) -> updateGameScale());
-            gameContainer.heightProperty().addListener((obs, oldVal, newVal) -> updateGameScale());
-        }
-
 
         gamePanel.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
@@ -247,12 +242,6 @@ public class GuiController implements Initializable {
         });
         gameOverPanel.setVisible(false);
 
-        final Reflection reflection = new Reflection();
-        reflection.setFraction(0.8);
-        reflection.setTopOpacity(0.9);
-        reflection.setTopOffset(-12);
-
-        // Fullscreen Listener
         if (gameContainer != null && gameContainer.getScene() != null) {
             gameContainer.getScene().windowProperty().addListener((observable, oldWindow, newWindow) -> {
                 if (newWindow instanceof Stage stage) {
@@ -265,16 +254,13 @@ public class GuiController implements Initializable {
     }
 
     private void initializeScoreDisplay() {
-        // Initialize managers
         highScoreManager = new HighScoreManager();
         settingsManager = new SettingsManager();
         
-        // Apply loaded settings
         if (ghostPanel != null) {
             ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
         }
         
-        // Bind labels to properties if they exist
         if (scoreLabel != null) {
             scoreLabel.textProperty().bind(currentScore.asString("Score: %d"));
         }
@@ -285,17 +271,14 @@ public class GuiController implements Initializable {
             levelLabel.textProperty().bind(currentLevel.asString("Level: %d"));
         }
         if (linesLabel != null) {
-            // Use a change listener to ensure the label updates
             linesCleared.addListener((obs, oldVal, newVal) -> {
                 if (linesLabel != null) {
                     linesLabel.setText("Lines: " + newVal.intValue());
                 }
             });
-            // Set initial value
             linesLabel.setText("Lines: " + linesCleared.get());
         }
         
-        // Listen for score changes to update high score
         currentScore.addListener((obs, oldVal, newVal) -> {
             checkAndUpdateHighScore(newVal.intValue());
         });
@@ -315,9 +298,7 @@ public class GuiController implements Initializable {
     }
 
     private void initializeBorders() {
-        // Enhanced game border with gradient and glow
         if (gameBorder != null) {
-            // Create gradient stroke for game border
             LinearGradient gameGradient = new LinearGradient(
                 0, 0, 1, 1, true, null,
                 new Stop(0.0, Color.rgb(91, 160, 242)),
@@ -328,7 +309,6 @@ public class GuiController implements Initializable {
             gameBorder.setStroke(gameGradient);
             gameBorder.setStrokeWidth(4);
             
-            // Enhanced drop shadow with stronger glow
             DropShadow gameShadow = new DropShadow();
             gameShadow.setColor(Color.rgb(74, 144, 226, 0.6));
             gameShadow.setRadius(10);
@@ -337,9 +317,7 @@ public class GuiController implements Initializable {
             gameBorder.setEffect(gameShadow);
         }
         
-        // Enhanced HUD border with gradient and glow
         if (hudBorder != null) {
-            // Create gradient stroke for HUD border - same as game border
             LinearGradient hudGradient = new LinearGradient(
                 0, 0, 1, 1, true, null,
                 new Stop(0.0, Color.rgb(91, 160, 242)),
@@ -350,7 +328,6 @@ public class GuiController implements Initializable {
             hudBorder.setStroke(hudGradient);
             hudBorder.setStrokeWidth(4);
             
-            // Enhanced drop shadow with stronger glow - same as game border
             DropShadow hudShadow = new DropShadow();
             hudShadow.setColor(Color.rgb(74, 144, 226, 0.6));
             hudShadow.setRadius(10);
@@ -359,7 +336,6 @@ public class GuiController implements Initializable {
             hudBorder.setEffect(hudShadow);
         }
         
-        // Style outer glow borders if they exist
         if (gameBorderOuter != null) {
             LinearGradient outerGameGradient = new LinearGradient(
                 0, 0, 1, 1, true, null,
@@ -400,28 +376,21 @@ public class GuiController implements Initializable {
     private void initializeStartScreen() {
         if (startScreen != null) {
             try {
-                // Load the background image
                 URL imageUrl = getClass().getClassLoader().getResource("Pixel Fields.png");
-                
-                
                 if (imageUrl == null) {
                     System.err.println("Failed to find 'Pixel Fields.png' in resources");
                     return;
                 }
                 
-                // Load the background image
                 Image backgroundImage = new Image(imageUrl.toExternalForm());
-                
-                // Wait for image to load
                 if (backgroundImage.isError()) {
                     System.err.println("Error loading image: " + backgroundImage.getException().getMessage());
                     return;
                 }
                 
-                // Create background image with proper sizing to cover the entire area
                 BackgroundSize backgroundSize = new BackgroundSize(
                     BackgroundSize.AUTO, BackgroundSize.AUTO,
-                    false, false, false, true  // cover = true to fill entire area
+                    false, false, false, true
                 );
                 
                 BackgroundImage bgImage = new BackgroundImage(
@@ -432,10 +401,8 @@ public class GuiController implements Initializable {
                     backgroundSize
                 );
                 
-                // Set the background
                 startScreen.setBackground(new Background(bgImage));
             } catch (Exception e) {
-                // If image loading fails, keep the default background color
                 System.err.println("Failed to load start screen background image: " + e.getMessage());
                 e.printStackTrace();
             }
@@ -459,21 +426,23 @@ public class GuiController implements Initializable {
                     return;
                 }
                 
-                // Use ImageView for precise control over positioning and sizing
                 gameAreaBackgroundImageView = new ImageView(backgroundImage);
-                // Make it bigger
-                double scaleX = 5.0; // Width multiplier
-                double scaleY = 2.5; // Height multiplier
+                double scaleX = 5.0;
+                double scaleY = 2.5;
                 gameAreaBackgroundImageView.setFitWidth(BASE_GAME_WIDTH * scaleX);
                 gameAreaBackgroundImageView.setFitHeight(BASE_GAME_HEIGHT * scaleY);
-                gameAreaBackgroundImageView.setPreserveRatio(false); // Stretch to fill exactly
-                // Center it by offsetting by half the difference
-                gameAreaBackgroundImageView.setLayoutX(-BASE_GAME_WIDTH * (scaleX - 1) / 2); // Center horizontally
-                gameAreaBackgroundImageView.setLayoutY(-BASE_GAME_HEIGHT * (scaleY - 1) / 2); // Center vertically
+                gameAreaBackgroundImageView.setPreserveRatio(false);
+                gameAreaBackgroundImageView.setLayoutX(-BASE_GAME_WIDTH * (scaleX - 1) / 2);
+                gameAreaBackgroundImageView.setLayoutY(-BASE_GAME_HEIGHT * (scaleY - 1) / 2);
                 gameAreaBackgroundImageView.setSmooth(true);
                 
-                // Insert at position 0 so it's behind all other content
                 scalingContainer.getChildren().add(0, gameAreaBackgroundImageView);
+                
+                if (settingsManager != null) {
+                    gameAreaBackgroundImageView.setVisible(settingsManager.isBackgroundPictureEnabled());
+                } else {
+                    gameAreaBackgroundImageView.setVisible(true);
+                }
             } catch (Exception e) {
                 System.err.println("Failed to load game area background image: " + e.getMessage());
             }
@@ -485,7 +454,6 @@ public class GuiController implements Initializable {
             return;
         }
         
-        // Define keybinds
         String[][] keybinds = {
             {"← / A", "Move Left"},
             {"→ / D", "Move Right"},
@@ -534,11 +502,9 @@ public class GuiController implements Initializable {
             return;
         }
         
-        // Position keybinds pane at top left of the game container
         keybindsPane.setLayoutX(30);
         keybindsPane.setLayoutY(50);
         
-        // Ensure the VBox inside is positioned at (0, 0) relative to the Pane
         if (keybindsContainer != null) {
             keybindsContainer.setLayoutX(0);
             keybindsContainer.setLayoutY(0);
@@ -555,20 +521,14 @@ public class GuiController implements Initializable {
             
             Media media = new Media(musicUrl.toExternalForm());
             mediaPlayer = new MediaPlayer(media);
-            
-            // Set to loop indefinitely
             mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
             
-            // Set initial volume from settings
             if (settingsManager != null) {
                 mediaPlayer.setVolume(settingsManager.getMusicVolume());
-                
-                // Play if music is enabled
                 if (settingsManager.isMusicEnabled()) {
                     mediaPlayer.play();
                 }
             } else {
-                // Default volume if settings not loaded yet
                 mediaPlayer.setVolume(0.7);
                 mediaPlayer.play();
             }
@@ -583,10 +543,8 @@ public class GuiController implements Initializable {
             return;
         }
         
-        // Update volume
         mediaPlayer.setVolume(settingsManager.getMusicVolume());
         
-        // Play or stop based on enabled setting
         if (settingsManager.isMusicEnabled()) {
             if (mediaPlayer.getStatus() != MediaPlayer.Status.PLAYING) {
                 mediaPlayer.play();
@@ -598,30 +556,39 @@ public class GuiController implements Initializable {
         }
     }
     
+    private void playDropSound() {
+        try {
+            URL dropSoundUrl = getClass().getClassLoader().getResource("drop.mp3");
+            if (dropSoundUrl != null) {
+                Media dropMedia = new Media(dropSoundUrl.toExternalForm());
+                MediaPlayer dropPlayer = new MediaPlayer(dropMedia);
+                dropPlayer.setVolume(0.7);
+                dropPlayer.play();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to play drop sound: " + e.getMessage());
+        }
+    }
+    
     private void initializeMenu() {
-        // Create popup menu
         menuPopup = new Popup();
         menuPopup.setAutoHide(true);
         
-        // Create VBox container for menu buttons
         VBox menuContainer = new VBox(2);
         menuContainer.setStyle("-fx-background-color: #2a2a2a; -fx-border-color: #4a4a4a; -fx-border-width: 1px; -fx-padding: 4px;");
         
-        // Create menu buttons
         mainMenuButton = new Button("Main Menu");
         mainMenuButton.setPrefWidth(100);
         mainMenuButton.setPrefHeight(30);
         mainMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
         mainMenuButton.setOnAction(e -> {
-            menuActionTaken = true; // Prevent auto-resume when going to main menu
+            menuActionTaken = true;
             menuPopup.hide();
             
-            // Stop timeline when returning to main menu
             if (timeLine != null) {
                 timeLine.stop();
             }
             
-            // Hide game, show start screen
             if (scalingContainer != null) {
                 scalingContainer.setVisible(false);
             }
@@ -631,7 +598,6 @@ public class GuiController implements Initializable {
             if (gameOverPanel != null) {
                 gameOverPanel.setVisible(false);
             }
-            // Hide keybinds when returning to main menu
             if (keybindsContainer != null) {
                 keybindsContainer.setVisible(false);
             }
@@ -644,10 +610,9 @@ public class GuiController implements Initializable {
         settingsMenuButton.setPrefHeight(30);
         settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
         settingsMenuButton.setOnAction(e -> {
-            menuActionTaken = true; // Prevent auto-resume when settings opens
-            boolean menuAutoPaused = !wasPausedBeforeMenu; // Remember if menu auto-paused
+            menuActionTaken = true;
+            boolean menuAutoPaused = !wasPausedBeforeMenu;
             menuPopup.hide();
-            // Pass whether menu auto-paused to settings
             openSettings(e, menuAutoPaused);
         });
         settingsMenuButton.setOnMouseEntered(e -> settingsMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #4a4a4a; -fx-text-fill: white; -fx-border-color: #5a5a5a;"));
@@ -658,7 +623,7 @@ public class GuiController implements Initializable {
         exitMenuButton.setPrefHeight(30);
         exitMenuButton.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: #3a3a3a; -fx-text-fill: white; -fx-border-color: #4a4a4a;");
         exitMenuButton.setOnAction(e -> {
-            menuActionTaken = true; // Prevent auto-resume when exiting
+            menuActionTaken = true;
             menuPopup.hide();
             exitGame(e);
         });
@@ -668,17 +633,13 @@ public class GuiController implements Initializable {
         menuContainer.getChildren().addAll(mainMenuButton, settingsMenuButton, exitMenuButton);
         menuPopup.getContent().add(menuContainer);
         
-        // Add listener to auto-resume when menu closes
         menuPopup.setOnHidden(e -> {
-            // Only resume if we auto-paused (not paused before) and no menu action was taken
             if (!menuActionTaken && wasPausedBeforeMenu == false && isPause.getValue() == Boolean.TRUE) {
-                // We auto-paused, so auto-resume (user clicked outside menu)
                 isPause.setValue(Boolean.FALSE);
                 if (timeLine != null && isGameOver.getValue() == Boolean.FALSE) {
                     timeLine.play();
                 }
             }
-            // Reset flags
             wasPausedBeforeMenu = false;
             menuActionTaken = false;
         });
@@ -687,12 +648,10 @@ public class GuiController implements Initializable {
     @FXML
     public void showMenu(ActionEvent actionEvent) {
         if (menuButton != null && menuPopup != null) {
-            // Auto-pause when menu opens (if game is not already paused and game is not over)
-            menuActionTaken = false; // Reset flag when opening menu
+            menuActionTaken = false;
             if (isGameOver.getValue() == Boolean.FALSE) {
-                wasPausedBeforeMenu = isPause.getValue(); // Remember if it was already paused
+                wasPausedBeforeMenu = isPause.getValue();
                 if (!isPause.getValue()) {
-                    // Auto-pause the game
                     isPause.setValue(Boolean.TRUE);
                     if (timeLine != null) {
                         timeLine.pause();
@@ -700,13 +659,8 @@ public class GuiController implements Initializable {
                 }
             }
             
-            // Calculate position below the button
             Window window = menuButton.getScene().getWindow();
-            
-            // Get button position relative to scene
             javafx.geometry.Point2D point = menuButton.localToScene(0, 0);
-            
-            // Calculate absolute screen coordinates
             double x = window.getX() + point.getX() + menuButton.getScene().getX();
             double y = window.getY() + point.getY() + menuButton.getScene().getY() + menuButton.getHeight() + 2;
             
@@ -737,7 +691,6 @@ public class GuiController implements Initializable {
             }
         }
         
-        // Initialize ghost panel
         if (ghostPanel != null) {
             ghostPanel.getChildren().clear();
             ghostRectangles = new Rectangle[brick.getBrickData().length][brick.getBrickData()[0].length];
@@ -752,7 +705,6 @@ public class GuiController implements Initializable {
                     ghostPanel.add(rectangle, j, i);
                 }
             }
-            // Apply ghost visibility setting
             if (settingsManager != null) {
                 ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
             } else {
@@ -766,7 +718,6 @@ public class GuiController implements Initializable {
         updateBrickPosition(brick);
         updateGhostPosition(brick);
 
-        // Initialize level and lines cleared
         currentLevel.set(1);
         linesCleared.set(0);
 
@@ -911,23 +862,18 @@ public class GuiController implements Initializable {
             DownData downData = eventListener.onDownEvent(event);
             ClearRow clearRow = downData.getClearRow();
             
-            // Always check for cleared rows (ClearRow is never null now)
             if (clearRow.getLinesRemoved() > 0) {
-                // Animate line clear
                 animateLineClear(clearRow.getClearedRowIndices());
                 
                 NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
 
-                // Update lines cleared and level
                 updateLevelAndLines(clearRow.getLinesRemoved());
             }
             
-            // Always refresh brick to show current state (including during lock delay)
             refreshBrick(downData.getViewData());
             
-            // Refresh background only if no lines were cleared (animation handles it otherwise)
             if (clearRow.getLinesRemoved() == 0 && eventListener != null) {
                 refreshGameBackground(eventListener.getBoardMatrix());
             }
@@ -937,28 +883,24 @@ public class GuiController implements Initializable {
 
     private void hardDrop() {
         if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
+            playDropSound();
             DownData downData = eventListener.onHardDropEvent(new MoveEvent(EventType.HARD_DROP, EventSource.USER));
             
-            // Handle cleared rows if any
             ClearRow clearRow = downData.getClearRow();
             if (clearRow.getLinesRemoved() > 0) {
-                // Animate line clear - this will handle background refresh after animation
                 animateLineClear(clearRow.getClearedRowIndices());
                 
                 NotificationPanel notificationPanel = new NotificationPanel("+" + clearRow.getScoreBonus());
                 groupNotification.getChildren().add(notificationPanel);
                 notificationPanel.showScore(groupNotification.getChildren());
 
-                // Update lines cleared and level
                 updateLevelAndLines(clearRow.getLinesRemoved());
             } else {
-                // No lines cleared, refresh background normally
                 if (eventListener != null) {
                     refreshGameBackground(eventListener.getBoardMatrix());
                 }
             }
             
-            // Refresh the brick display
             refreshBrick(downData.getViewData());
         }
         gamePanel.requestFocus();
@@ -977,11 +919,9 @@ public class GuiController implements Initializable {
             return;
         }
         
-        // Create parallel animation for all cleared rows (flash effect)
         javafx.animation.ParallelTransition parallel = new javafx.animation.ParallelTransition();
         
         for (Integer rowIndex : clearedRowIndices) {
-            // Convert board row index to display row index (accounting for hidden rows)
             int displayRow = rowIndex - HIDDEN_ROWS;
             if (displayRow >= 0 && displayRow < displayMatrix.length) {
                 for (int col = 0; col < displayMatrix[displayRow].length; col++) {
@@ -1018,7 +958,6 @@ public class GuiController implements Initializable {
                 linesLabel.setText("Lines: " + newLinesTotal);
             }
 
-            // Increase level every 15 lines cleared
             int newLevel = (newLinesTotal / 15) + 1;
             int oldLevel = currentLevel.get();
             if (newLevel != oldLevel) {
@@ -1031,7 +970,6 @@ public class GuiController implements Initializable {
     private void updateGameSpeed() {
         if (timeLine != null) {
             timeLine.stop();
-            // Increase speed as level increases (max 5x speed)
             double speedFactor = Math.max(0.2, 1.0 - (currentLevel.get() - 1) * 0.15);
             Duration newDuration = Duration.millis(BASE_GAME_SPEED * speedFactor);
 
@@ -1047,10 +985,8 @@ public class GuiController implements Initializable {
     public void updateGameScale() {
         if (gameContainer == null || scalingContainer == null) return;
 
-        // Use layout bounds to get actual dimensions, fallback to width/height
         double containerWidth = gameContainer.getWidth();
         double containerHeight = gameContainer.getHeight();
-        
 
         if (containerWidth <= 0 || containerHeight <= 0) {
             containerWidth = gameContainer.getLayoutBounds().getWidth();
@@ -1059,47 +995,31 @@ public class GuiController implements Initializable {
         
         if (containerWidth <= 0 || containerHeight <= 0) return;
 
-        // Get preferred size of the scaling container
         double contentWidth = scalingContainer.getPrefWidth() > 0 ? scalingContainer.getPrefWidth() : BASE_GAME_WIDTH;
         double contentHeight = scalingContainer.getPrefHeight() > 0 ? scalingContainer.getPrefHeight() : BASE_GAME_HEIGHT;
 
-        // Calculate scale factors for width and height
         double scaleX = containerWidth / contentWidth;
         double scaleY = containerHeight / contentHeight;
 
         scaleFactor = Math.min(scaleX, scaleY) * 0.85;
         
-        // Cap maximum scale at 1.5x to make game bigger on large screens
         if (scaleFactor > 1.0) {
             scaleFactor = 1.0;
         }
 
-        // Set transform origin to top-left corner (0, 0)
         scalingContainer.setTranslateX(0);
         scalingContainer.setTranslateY(0);
-        
-        // Apply scaling from top-left origin
         scalingContainer.setScaleX(scaleFactor);
         scalingContainer.setScaleY(scaleFactor);
 
-        // Calculate scaled dimensions
         double scaledWidth = contentWidth * scaleFactor;
         double scaledHeight = contentHeight * scaleFactor;
         
-        // Center the scaled content by translating it
         double offsetX = (containerWidth - scaledWidth) / 2;
         double offsetY = (containerHeight - scaledHeight) / 2;
         
         scalingContainer.setTranslateX(offsetX);
         scalingContainer.setTranslateY(offsetY);
-    }
-
-    private void centerGameInFullscreen() {
-        if (gameContainer != null) {
-            // Force re-layout to center the game
-            gameContainer.requestLayout();
-
-        }
     }
 
     public void setEventListener(InputEventListener eventListener) {
@@ -1128,17 +1048,17 @@ public class GuiController implements Initializable {
     }
 
     public void newGame(ActionEvent actionEvent) {
-        timeLine.stop();
+        if (timeLine != null) {
+            timeLine.stop();
+        }
         gameOverPanel.setVisible(false);
 
-        // Reset game statistics
         currentLevel.set(1);
         linesCleared.set(0);
 
         eventListener.createNewGame();
         gamePanel.requestFocus();
 
-        // Reset game speed to initial value
         timeLine = new Timeline(new KeyFrame(
                 Duration.millis(BASE_GAME_SPEED),
                 ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))
@@ -1160,12 +1080,10 @@ public class GuiController implements Initializable {
         isPause.setValue(!currentPauseState);
         
         if (isPause.getValue()) {
-            // Pause the game
             if (timeLine != null) {
                 timeLine.pause();
             }
         } else {
-            // Resume the game
             if (timeLine != null) {
                 timeLine.play();
             }
@@ -1179,13 +1097,9 @@ public class GuiController implements Initializable {
     }
     
     private void openSettings(ActionEvent actionEvent, boolean menuAutoPaused) {
-        // Remember if game was paused before opening settings
         wasPausedBeforeSettings = isPause.getValue();
-        
-        // If menu auto-paused, we should resume after settings closes
         boolean shouldResumeAfterSettings = menuAutoPaused || (!wasPausedBeforeSettings);
         
-        // Pause the game when opening settings (if not already paused)
         if (isPause.getValue() == Boolean.FALSE && isGameOver.getValue() == Boolean.FALSE) {
             if (timeLine != null) {
                 timeLine.pause();
@@ -1193,19 +1107,17 @@ public class GuiController implements Initializable {
             isPause.setValue(Boolean.TRUE);
         }
         
-        // Create and show settings dialog
         SettingsDialog settingsDialog = new SettingsDialog();
         
-        // Set dialog owner to center it on the main window
         if (gameContainer != null && gameContainer.getScene() != null && gameContainer.getScene().getWindow() != null) {
             settingsDialog.initOwner(gameContainer.getScene().getWindow());
         }
         
-        // Load current settings
         if (settingsManager != null) {
             settingsDialog.setGhostPieceEnabled(settingsManager.isGhostPieceEnabled());
             settingsDialog.setMusicEnabled(settingsManager.isMusicEnabled());
             settingsDialog.setMusicVolume(settingsManager.getMusicVolume());
+            settingsDialog.setBackgroundPictureEnabled(settingsManager.isBackgroundPictureEnabled());
         }
         
         settingsDialog.setVolumeChangeListener(volume -> {
@@ -1243,12 +1155,24 @@ public class GuiController implements Initializable {
             }
         });
         
+        settingsDialog.setBackgroundPictureChangeListener(enabled -> {
+            if (settingsManager != null) {
+                settingsManager.setBackgroundPictureEnabled(enabled);
+            }
+            if (gameAreaBackgroundImageView != null) {
+                gameAreaBackgroundImageView.setVisible(enabled);
+            }
+        });
+        
         Optional<ButtonType> result = settingsDialog.showAndWait();
         
         if (result.isPresent() && result.get() == ButtonType.OK) {
             if (settingsManager != null) {
                 if (ghostPanel != null) {
                     ghostPanel.setVisible(settingsManager.isGhostPieceEnabled());
+                }
+                if (gameAreaBackgroundImageView != null) {
+                    gameAreaBackgroundImageView.setVisible(settingsManager.isBackgroundPictureEnabled());
                 }
                 updateMusicSettings();
             }
@@ -1270,7 +1194,6 @@ public class GuiController implements Initializable {
 
     private void updateBrickPosition(ViewData brick) {
         if (brickPanel != null) {
-            // Anchor to the background grid so active bricks never drift when they lock in place
             double originX = gamePanel.getLayoutX();
             double originY = gamePanel.getLayoutY();
             double cellWidth = BRICK_SIZE + gamePanel.getHgap();
@@ -1285,7 +1208,6 @@ public class GuiController implements Initializable {
 
     private void updateGhostPosition(ViewData brick) {
         if (ghostPanel != null && ghostRectangles != null) {
-            // Position ghost at the landing location
             double originX = gamePanel.getLayoutX();
             double originY = gamePanel.getLayoutY();
             double cellWidth = BRICK_SIZE + gamePanel.getHgap();
@@ -1296,14 +1218,13 @@ public class GuiController implements Initializable {
             ghostPanel.setLayoutX(xPos);
             ghostPanel.setLayoutY(yPos);
             
-            // Update ghost block colors to match current brick
             int[][] brickData = brick.getBrickData();
             for (int i = 0; i < brickData.length && i < ghostRectangles.length; i++) {
                 for (int j = 0; j < brickData[i].length && j < ghostRectangles[i].length; j++) {
                     if (ghostRectangles[i][j] != null) {
                         if (brickData[i][j] != 0) {
                             ghostRectangles[i][j].setFill(getFillColor(brickData[i][j]));
-                            ghostRectangles[i][j].setOpacity(0.3); // Keep semi-transparent
+                            ghostRectangles[i][j].setOpacity(0.3);
                             ghostRectangles[i][j].setVisible(true);
                         } else {
                             ghostRectangles[i][j].setVisible(false);
@@ -1331,39 +1252,30 @@ public class GuiController implements Initializable {
             scalingContainer.setVisible(true);
         }
         
-        // Show keybinds when game starts
         if (keybindsContainer != null) {
             keybindsContainer.setVisible(true);
         }
-        // Reposition keybinds to ensure they're in the right place
         positionKeybinds();
         
-        // Stop any existing timeline
         if (timeLine != null) {
             timeLine.stop();
         }
         
-        // Hide game over panel if visible
         if (gameOverPanel != null) {
             gameOverPanel.setVisible(false);
         }
         
-        // Reset game state
         isPause.setValue(Boolean.FALSE);
         isGameOver.setValue(Boolean.FALSE);
         
         if (eventListener == null) {
-            // Initialize game if not already initialized
             new GameController(this);
         } else {
-            // Game already exists, restart it
             eventListener.createNewGame();
             
-            // Reset game statistics
             currentLevel.set(1);
             linesCleared.set(0);
             
-            // Restart timeline
             timeLine = new Timeline(new KeyFrame(
                     Duration.millis(BASE_GAME_SPEED),
                     ae -> moveDown(new MoveEvent(EventType.DOWN, EventSource.THREAD))

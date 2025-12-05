@@ -12,6 +12,7 @@ public class SettingsManager {
     private boolean ghostPieceEnabled;
     private boolean musicEnabled;
     private double musicVolume;
+    private boolean backgroundPictureEnabled;
     
     public SettingsManager() {
         properties = new Properties();
@@ -26,10 +27,12 @@ public class SettingsManager {
             ghostPieceEnabled = Boolean.parseBoolean(properties.getProperty("ghostPieceEnabled", "true"));
             musicEnabled = Boolean.parseBoolean(properties.getProperty("musicEnabled", "true"));
             musicVolume = Double.parseDouble(properties.getProperty("musicVolume", "0.7"));
+            backgroundPictureEnabled = Boolean.parseBoolean(properties.getProperty("backgroundPictureEnabled", "true"));
         } catch (IOException e) {
             ghostPieceEnabled = true;
             musicEnabled = true;
             musicVolume = 0.7;
+            backgroundPictureEnabled = true;
         }
     }
     
@@ -44,6 +47,7 @@ public class SettingsManager {
                 properties.setProperty("ghostPieceEnabled", String.valueOf(ghostPieceEnabled));
                 properties.setProperty("musicEnabled", String.valueOf(musicEnabled));
                 properties.setProperty("musicVolume", String.valueOf(musicVolume));
+                properties.setProperty("backgroundPictureEnabled", String.valueOf(backgroundPictureEnabled));
                 properties.store(output, "Tetris Game Settings");
             }
         } catch (IOException e) {
@@ -76,6 +80,15 @@ public class SettingsManager {
     
     public void setMusicVolume(double volume) {
         this.musicVolume = Math.max(0.0, Math.min(1.0, volume));
+        saveSettings();
+    }
+    
+    public boolean isBackgroundPictureEnabled() {
+        return backgroundPictureEnabled;
+    }
+    
+    public void setBackgroundPictureEnabled(boolean enabled) {
+        this.backgroundPictureEnabled = enabled;
         saveSettings();
     }
 }
