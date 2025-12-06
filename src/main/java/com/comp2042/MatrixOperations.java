@@ -52,36 +52,55 @@ public class MatrixOperations {
         return copy;
     }
 
+    private static final int BASE_SCORE_MULTIPLIER = 50;
+    
     public static ClearRow checkRemoving(final int[][] matrix) {
-        int[][] tmp = new int[matrix.length][matrix[0].length];
-        Deque<int[]> newRows = new ArrayDeque<>();
+        int[][] newMatrix = new int[matrix.length][matrix[0].length];
+        Deque<int[]> rowsToKeep = new ArrayDeque<>();
         List<Integer> clearedRows = new ArrayList<>();
 
+        identifyClearedRows(matrix, rowsToKeep, clearedRows);
+        rebuildMatrix(newMatrix, rowsToKeep);
+        
+        int scoreBonus = calculateScoreBonus(clearedRows.size());
+        return new ClearRow(clearedRows.size(), newMatrix, scoreBonus, clearedRows);
+    }
+    
+    private static void identifyClearedRows(int[][] matrix, Deque<int[]> rowsToKeep, List<Integer> clearedRows) {
         for (int i = 0; i < matrix.length; i++) {
-            int[] tmpRow = new int[matrix[i].length];
-            boolean rowToClear = true;
-            for (int j = 0; j < matrix[0].length; j++) {
-                if (matrix[i][j] == 0) {
-                    rowToClear = false;
-                }
-                tmpRow[j] = matrix[i][j];
-            }
-            if (rowToClear) {
+            int[] row = new int[matrix[i].length];
+            System.arraycopy(matrix[i], 0, row, 0, matrix[i].length);
+            
+            if (isRowFull(matrix[i])) {
                 clearedRows.add(i);
             } else {
-                newRows.add(tmpRow);
+                rowsToKeep.add(row);
             }
         }
-        for (int i = matrix.length - 1; i >= 0; i--) {
-            int[] row = newRows.pollLast();
+    }
+    
+    private static boolean isRowFull(int[] row) {
+        for (int cell : row) {
+            if (cell == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private static void rebuildMatrix(int[][] newMatrix, Deque<int[]> rowsToKeep) {
+        for (int i = newMatrix.length - 1; i >= 0; i--) {
+            int[] row = rowsToKeep.pollLast();
             if (row != null) {
-                tmp[i] = row;
+                newMatrix[i] = row;
             } else {
                 break;
             }
         }
-        int scoreBonus = 50 * clearedRows.size() * clearedRows.size();
-        return new ClearRow(clearedRows.size(), tmp, scoreBonus, clearedRows);
+    }
+    
+    private static int calculateScoreBonus(int linesCleared) {
+        return BASE_SCORE_MULTIPLIER * linesCleared * linesCleared;
     }
 
     public static List<int[][]> deepCopyList(List<int[][]> list){

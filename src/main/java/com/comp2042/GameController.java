@@ -24,36 +24,9 @@ public class GameController implements InputEventListener {
         ClearRow clearRow;
         
         if (!canMove) {
-            if (!isLocking) {
-                isLocking = true;
-                lockStartTime = System.currentTimeMillis();
-            }
-            
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lockStartTime >= LOCK_DELAY_MS) {
-                isLocking = false;
-                lockStartTime = -1;
-                
-                board.mergeBrickToBackground();
-                clearRow = board.clearRows();
-                
-                if (clearRow.getLinesRemoved() > 0) {
-                    board.getScore().add(clearRow.getScoreBonus());
-                }
-                
-                if (board.createNewBrick()) {
-                    viewGuiController.gameOver();
-                }
-                
-                if (clearRow.getLinesRemoved() == 0) {
-                    viewGuiController.refreshGameBackground(board.getBoardMatrix());
-                }
-            } else {
-                clearRow = new ClearRow(0, board.getBoardMatrix(), 0, null);
-            }
+            clearRow = handleBrickLocked();
         } else {
-            isLocking = false;
-            lockStartTime = -1;
+            resetLockState();
             
             if (event.getEventSource() == EventSource.USER) {
                 board.getScore().add(1);
@@ -64,21 +37,72 @@ public class GameController implements InputEventListener {
         
         return new DownData(clearRow, board.getViewData());
     }
+    
+    private ClearRow handleBrickLocked() {
+        if (!isLocking) {
+            startLockTimer();
+        }
+        
+        if (isLockTimerExpired()) {
+            return processBrickLock();
+        }
+        
+        return new ClearRow(0, board.getBoardMatrix(), 0, null);
+    }
+    
+    private void startLockTimer() {
+        isLocking = true;
+        lockStartTime = System.currentTimeMillis();
+    }
+    
+    private boolean isLockTimerExpired() {
+        long currentTime = System.currentTimeMillis();
+        return currentTime - lockStartTime >= LOCK_DELAY_MS;
+    }
+    
+    private ClearRow processBrickLock() {
+        resetLockState();
+        
+        board.mergeBrickToBackground();
+        ClearRow clearRow = board.clearRows();
+        
+        if (clearRow.getLinesRemoved() > 0) {
+            board.getScore().add(clearRow.getScoreBonus());
+        }
+        
+        if (board.createNewBrick()) {
+            viewGuiController.gameOver();
+        }
+        
+        if (clearRow.getLinesRemoved() == 0) {
+            viewGuiController.refreshGameBackground(board.getBoardMatrix());
+        }
+        
+        return clearRow;
+    }
 
     public DownData onHardDropEvent(MoveEvent event) {
-        boolean canMove = true;
-        int linesDropped = 0;
-
-        while (canMove) {
-            canMove = board.moveBrickDown();
-            if (canMove) {
-                linesDropped++;
-            }
-        }
-
+        int linesDropped = performHardDrop();
+        
         board.mergeBrickToBackground();
         ClearRow clearRow = board.clearRows();
 
+        handleLineClearScore(clearRow, linesDropped);
+        handleGameOverAfterDrop();
+
+        viewGuiController.refreshGameBackground(board.getBoardMatrix());
+        return new DownData(clearRow, board.getViewData());
+    }
+    
+    private int performHardDrop() {
+        int linesDropped = 0;
+        while (board.moveBrickDown()) {
+            linesDropped++;
+        }
+        return linesDropped;
+    }
+    
+    private void handleLineClearScore(ClearRow clearRow, int linesDropped) {
         if (clearRow.getLinesRemoved() > 0) {
             board.getScore().add(clearRow.getScoreBonus());
         }
@@ -86,21 +110,19 @@ public class GameController implements InputEventListener {
         if (linesDropped > 0) {
             board.getScore().add(linesDropped * 2);
         }
-
+    }
+    
+    private void handleGameOverAfterDrop() {
         boolean gameOver = board.createNewBrick();
         if (gameOver) {
             viewGuiController.gameOver();
         }
-
-        viewGuiController.refreshGameBackground(board.getBoardMatrix());
-        return new DownData(clearRow, board.getViewData());
     }
 
     @Override
     public ViewData onLeftEvent(MoveEvent event) {
         if (board.moveBrickLeft()) {
-            isLocking = false;
-            lockStartTime = -1;
+            resetLockState();
         }
         return board.getViewData();
     }
@@ -108,8 +130,7 @@ public class GameController implements InputEventListener {
     @Override
     public ViewData onRightEvent(MoveEvent event) {
         if (board.moveBrickRight()) {
-            isLocking = false;
-            lockStartTime = -1;
+            resetLockState();
         }
         return board.getViewData();
     }
@@ -117,10 +138,14 @@ public class GameController implements InputEventListener {
     @Override
     public ViewData onRotateEvent(MoveEvent event) {
         if (board.rotateLeftBrick()) {
-            isLocking = false;
-            lockStartTime = -1;
+            resetLockState();
         }
         return board.getViewData();
+    }
+    
+    private void resetLockState() {
+        isLocking = false;
+        lockStartTime = -1;
     }
 
     @Override
