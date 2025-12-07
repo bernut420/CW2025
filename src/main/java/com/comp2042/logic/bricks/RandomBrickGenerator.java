@@ -7,6 +7,10 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Implementation of BrickGenerator that uses a "bag" system for brick generation.
+ * Ensures fair distribution by shuffling all brick types before reusing them.
+ */
 public class RandomBrickGenerator implements BrickGenerator {
 
     private final List<Brick> brickList;

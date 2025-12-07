@@ -7,8 +7,20 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/**
+ * Main entry point for the Tetris game application.
+ * Initializes the JavaFX application and sets up the game window.
+ */
 public class Main extends Application {
 
+    /**
+     * Initializes and displays the main game window.
+     * Loads the FXML layout, sets up the GUI controller, and configures
+     * window properties including fullscreen mode and resize listeners.
+     * 
+     * @param primaryStage the primary stage for the application
+     * @throws Exception if there is an error loading the FXML file
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/gameLayout.fxml"));
@@ -48,6 +60,11 @@ public class Main extends Application {
         });
     }
 
+    /**
+     * Main method to launch the JavaFX application.
+     * 
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         launch(args);
     }

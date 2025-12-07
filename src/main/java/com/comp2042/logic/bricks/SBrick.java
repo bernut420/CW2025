@@ -5,6 +5,10 @@ import com.comp2042.MatrixOperations;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of the S-shaped Tetris brick.
+ * Has two rotation states.
+ */
 final class SBrick implements Brick {
 
     private final List<int[][]> brickMatrix = new ArrayList<>();

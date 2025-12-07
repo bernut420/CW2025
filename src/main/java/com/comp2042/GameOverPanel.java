@@ -7,6 +7,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
+/**
+ * UI panel displayed when the game ends.
+ * Shows "GAME OVER" message and a "Play Again" button.
+ */
 public class GameOverPanel extends BorderPane {
 
     private Label gameOverLabel;

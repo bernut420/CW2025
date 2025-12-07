@@ -11,6 +11,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
+/**
+ * UI panel for displaying temporary notifications (e.g., score bonuses).
+ * Automatically fades out and moves upward after being displayed.
+ */
 public class NotificationPanel extends BorderPane {
 
     public NotificationPanel(String text) {

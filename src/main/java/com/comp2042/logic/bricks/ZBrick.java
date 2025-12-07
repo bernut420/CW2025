@@ -5,6 +5,10 @@ import com.comp2042.MatrixOperations;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of the Z-shaped Tetris brick.
+ * Has two rotation states.
+ */
 final class ZBrick implements Brick {
 
     private final List<int[][]> brickMatrix = new ArrayList<>();

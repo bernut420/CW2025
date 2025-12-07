@@ -6,7 +6,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 
-
+/**
+ * Dialog window for game settings configuration.
+ * Allows users to adjust ghost piece visibility, music settings, volume, and background picture.
+ */
 public class SettingsDialog extends Dialog<ButtonType> {
     private CheckBox ghostPieceCheckBox;
     private CheckBox musicCheckBox;

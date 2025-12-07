@@ -1,15 +1,29 @@
 package com.comp2042;
 
+/**
+ * Main game controller that handles game logic and coordinates between
+ * the board and the GUI. Implements the InputEventListener interface to
+ * respond to user input events.
+ */
 public class GameController implements InputEventListener {
 
     private Board board = new SimpleBoard(25, 10);
 
     private final GuiController viewGuiController;
     
+    /** Lock delay in milliseconds before a brick is permanently placed. */
     private static final long LOCK_DELAY_MS = 500;
+    /** Timestamp when the lock timer started. */
     private long lockStartTime = -1;
+    /** Flag indicating if a brick is currently in the locking state. */
     private boolean isLocking = false;
 
+    /**
+     * Constructs a new GameController with the specified GUI controller.
+     * Initializes the board, creates the first brick, and sets up event listeners.
+     * 
+     * @param c the GUI controller to coordinate with
+     */
     public GameController(GuiController c) {
         viewGuiController = c;
         board.createNewBrick();

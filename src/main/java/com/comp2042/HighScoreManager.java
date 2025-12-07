@@ -2,7 +2,10 @@ package com.comp2042;
 
 import java.io.*;
 
-
+/**
+ * Manages the high score persistence.
+ * Loads and saves the high score to a text file.
+ */
 public class HighScoreManager {
     private static final String HIGH_SCORE_FILE = "tetris_highscore.txt";
     private int highScore;

@@ -3,7 +3,10 @@ package com.comp2042;
 import java.io.*;
 import java.util.Properties;
 
-
+/**
+ * Manages game settings persistence.
+ * Loads and saves settings to a properties file in the user's home directory.
+ */
 public class SettingsManager {
     private static final String SETTINGS_FILE_NAME = "tetris_settings.properties";
     private String settingsFilePath;

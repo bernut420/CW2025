@@ -6,6 +6,10 @@ import com.comp2042.logic.bricks.RandomBrickGenerator;
 
 import java.awt.*;
 
+/**
+ * Implementation of the Board interface representing the game board.
+ * Manages the game matrix, brick movement, rotation, and hold functionality.
+ */
 public class SimpleBoard implements Board {
 
     private final int width;

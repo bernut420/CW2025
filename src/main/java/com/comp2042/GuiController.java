@@ -48,6 +48,11 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * Main GUI controller for the Tetris game.
+ * Manages all UI components, user input handling, game rendering, animations,
+ * and coordinates between the game logic and the visual representation.
+ */
 public class GuiController implements Initializable {
 
     private static final int BRICK_SIZE = 25;
